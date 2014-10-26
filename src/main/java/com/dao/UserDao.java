@@ -58,6 +58,8 @@ public class UserDao implements UserDaoInterface {
     @Override
 //    @Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public boolean deleteUser(User user) {
+        Session session = sessionFactory.getCurrentSession();
+        Transaction tx = null;
         try {
             if (user != null)
                 getSession().delete(user);
