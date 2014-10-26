@@ -1,7 +1,7 @@
 package com.dao;
 
+import com.logger.LoggerWrapper;
 import com.model.User;
-import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -21,7 +21,7 @@ import java.util.List;
 //@Repository
 public class UserDao implements UserDaoInterface {
 
-//    private static final LoggerWrapper LOG = LoggerWrapper.get(UserDaoInterface.class);
+    private static final LoggerWrapper LOG = LoggerWrapper.get(UserDaoInterface.class);
 
     private static SessionFactory sessionFactory = new Configuration().configure().buildSessionFactory();
 //    @Autowired
@@ -40,17 +40,19 @@ public class UserDao implements UserDaoInterface {
     }
 
 
-//    public void addUser(User user) {
-//        getSession().save(user);
-//    }
-
     @Override
 //    @Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public boolean saveOrUpdateUser(User user) {
+        Session session = sessionFactory.getCurrentSession();
+        Transaction tx = null;
         try {
-            getSession().saveOrUpdate(user);
+            tx = session.beginTransaction();
+            LOG.info("saveOrUpdateUser");
+            session.saveOrUpdate(user);
+            tx.commit();
             return true;
         }catch (Exception e){
+            if (tx!=null) tx.rollback();
             return false;
         }
     }
@@ -61,10 +63,15 @@ public class UserDao implements UserDaoInterface {
         Session session = sessionFactory.getCurrentSession();
         Transaction tx = null;
         try {
-            if (user != null)
-                getSession().delete(user);
+            tx = session.beginTransaction();
+            LOG.info("deleteUser");
+            if (user != null) {
+                session.delete(user);
+            }
+            tx.commit();
             return true;
         } catch (Exception e) {
+            if (tx!=null) tx.rollback();
             return false;
         }
     }
@@ -74,16 +81,17 @@ public class UserDao implements UserDaoInterface {
     public User getUser(int id) {
         Session session = sessionFactory.getCurrentSession();
         Transaction tx = null;
+        User user = null;
         try{
-            tx = getSession().beginTransaction();
-            session.createQuery("FROM User").list();
+            tx = session.beginTransaction();
+            LOG.info("getUser");
+            user = (User) session.get(User.class, id);
             tx.commit();
-        }catch (HibernateException e) {
+        }catch (Exception e) {
             if (tx!=null) tx.rollback();
             e.printStackTrace();
         }
-//        LOG.info("HELLO");
-        return (User) getSession().get(User.class, id);
+        return user;
     }
 
     @Override
@@ -94,10 +102,11 @@ public class UserDao implements UserDaoInterface {
         Session session = sessionFactory.getCurrentSession();
         Transaction tx = null;
         try{
-            tx = getSession().beginTransaction();
+            tx = session.beginTransaction();
+            LOG.info("getAllUsers");
             list = session.createQuery("FROM User").list();
             tx.commit();
-        }catch (HibernateException e) {
+        }catch (Exception e) {
             if (tx!=null) tx.rollback();
             e.printStackTrace();
         }
