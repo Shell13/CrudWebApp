@@ -2,13 +2,13 @@ package com.controller;
 
 //import org.springframework.stereotype.Controller;
 
+import com.dao.UserDao;
 import com.model.User;
 import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.data.Container;
 import com.vaadin.data.Item;
 import com.vaadin.data.Property;
 import com.vaadin.data.fieldgroup.FieldGroup;
-import com.vaadin.data.hbnutil.HbnContainer;
 import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.event.FieldEvents;
 import com.vaadin.server.VaadinRequest;
@@ -16,6 +16,7 @@ import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.*;
 
 import javax.servlet.annotation.WebServlet;
+import java.util.List;
 
 /**
  * Created by Roman on 21.10.2014.
@@ -31,28 +32,35 @@ public class UserController extends UI {
 
     private Table userList = new Table();
     private TextField searchField = new TextField();
+    private TextField nameField = new TextField();
+    private TextField ageField = new TextField();
+    private TextField isAdminField = new TextField();
     private Button addNewUserButton = new Button("New");
     private Button removeUserButton = new Button("Remove");
     private Button saveUserButton = new Button("Save");
     private FormLayout editorLayout = new FormLayout();
     private FieldGroup editorFields = new FieldGroup();
+    private CheckBox checkBox = new CheckBox("Admin", false);
 
-    private static final String USER_ID = "ID";
+    private static final String ID = "ID";
     private static final String NAME = "Name";
     private static final String AGE = "Age";
     private static final String IS_ADMIN = "Admin";
     private static final String CREATED_DATE = "Date";
 
-    private static final String[] fieldNames = new String[] {USER_ID, NAME,
+    private static final String[] fieldNames = new String[] {ID, NAME,
             AGE, IS_ADMIN, CREATED_DATE};
 
-    private Table table;
+    private static final String[] leftFields = new String[]{NAME, AGE};
+
+    private static UserDao userDao = new UserDao();
     /*
          * Any component can be bound to an external data source. This example uses
          * just a dummy in-memory list, but there are many more practical
          * implementations.
          */
-    IndexedContainer contactContainer = table.setContainerDataSource(new HbnContainer(User.class, this));
+//    Container contactContainer = getContainer();
+    IndexedContainer contactContainer = createDummyDatasource();
 
     @Override
     protected void init(VaadinRequest request) {
@@ -62,56 +70,6 @@ public class UserController extends UI {
         initSearch();
         initAddRemoveButtons();
     }
-//    protected void init(VaadinRequest request) {
-//        final VerticalLayout layout = new VerticalLayout();
-//        layout.setMargin(true);
-//        setContent(layout);
-//
-//        Button button = new Button("Click Me");
-//        button.addClickListener(new Button.ClickListener() {
-//            public void buttonClick(Button.ClickEvent event) {
-//                layout.addComponent(new Label("Thank you for clicking"));
-//            }
-//        });
-//        layout.addComponent(button);
-//
-//        // ********************************************************************************************
-//        //
-//        // Using postgresql with these data in pom.xml file:
-//        //
-//		/*<dependency>
-//			<groupId>org.hibernate</groupId>
-//			<artifactId>hibernate-core</artifactId>
-//			<version>4.2.6.Final</version>
-//		</dependency>
-//		<dependency>
-//	    	<groupId>postgresql</groupId>
-//	    	<artifactId>postgresql</artifactId>
-//	    	<version>9.0-801.jdbc4</version>
-//		</dependency>*/
-//
-////        User user = new User();
-////        user.setId(1);
-////        user.setName("The very first user)");
-////
-////        // Getting a Session object:
-////        Configuration configuration = new Configuration();
-////        configuration.configure();
-////        ServiceRegistry serviceRegistry = new ServiceRegistryBuilder().applySettings(configuration.getProperties()).buildServiceRegistry();
-////        SessionFactory sessionFactory = configuration.buildSessionFactory(serviceRegistry);
-////        Session session = sessionFactory.openSession();
-////
-////        // Using session object to save an object.
-////        // First, begin a transaction:
-////        session.beginTransaction();
-////
-////        // Saving:
-////        session.save(user);
-////
-////        // Ending the transaction:
-////        session.getTransaction().commit();
-//        // ************************************************************************************************
-//    }
 
     private void initLayout() {
 
@@ -157,18 +115,48 @@ public class UserController extends UI {
 
         editorLayout.addComponent(removeUserButton);
 
-		/* User interface can be created dynamically to reflect underlying data. */
-        for (String fieldName : fieldNames) {
-            TextField field = new TextField(fieldName);
-            editorLayout.addComponent(field);
-            field.setWidth("100%");
+//        TextField idField = new TextField();
 
-			/*
-			 * We use a FieldGroup to connect multiple components to a data
-			 * source at once.
-			 */
-            editorFields.bind(field, fieldName);
-        }
+
+        TextField nameField = new TextField();
+        nameField.setInputPrompt("Enter name");
+        nameField.setMaxLength(25);
+        editorLayout.addComponent(nameField);
+
+
+        TextField ageField = new TextField();
+        ageField.setInputPrompt("Enter age");
+        ageField.setMaxLength(3);
+        editorLayout.addComponent(ageField);
+
+
+		/* User interface can be created dynamically to reflect underlying data. */
+//        for (String fieldName : leftFields) {
+//            TextField field = new TextField(fieldName);
+//            editorLayout.addComponent(field);
+//            field.setWidth("100%");
+//
+//			/*
+//			 * We use a FieldGroup to connect multiple components to a data
+//			 * source at once.
+//			 */
+//            editorFields.bind(field, fieldName);
+//        }
+        CheckBox checkBox = new CheckBox("Admin", false);
+
+        checkBox.addValueChangeListener(new Property.ValueChangeListener() {
+            @Override
+            public void valueChange(final Property.ValueChangeEvent event) {
+                final String valueString = String.valueOf(event.getProperty()
+                        .getValue());
+                Notification.show("Value changed:", valueString,
+                        Notification.Type.TRAY_NOTIFICATION);
+            }
+        });
+
+        editorLayout.addComponent(checkBox);
+
+        editorLayout.addComponent(saveUserButton);
 
 		/*
 		 * Data can be buffered in the user interface. When doing so, commit()
@@ -187,16 +175,28 @@ public class UserController extends UI {
 				 * a new row in the beginning of the list.
 				 */
                 contactContainer.removeAllContainerFilters();
-                Object contactId = contactContainer.addItemAt(0);
+                Object contactId = contactContainer.addItem(0);
+
 
 				/*
 				 * Each Item has a set of Properties that hold values. Here we
 				 * set a couple of those.
 				 */
-                userList.getContainerProperty(contactId, USER_ID).setValue(
-                        "New");
-                userList.getContainerProperty(contactId, NAME).setValue(
-                        "Name");
+                nameField.setInputPrompt("Enter name");
+                ageField.setInputPrompt("Enter age");
+                checkBox.addValueChangeListener(new Property.ValueChangeListener() {
+                    @Override
+                    public void valueChange(final Property.ValueChangeEvent event) {
+                        final String valueString = String.valueOf(event.getProperty()
+                                .getValue());
+                        Notification.show("Value changed:", valueString,
+                                Notification.Type.TRAY_NOTIFICATION);
+                    }
+                });
+
+                userList.getContainerProperty(nameField, NAME).setValue("Name");
+                userList.getContainerProperty(ageField, AGE).setValue("");
+                userList.getContainerProperty(checkBox, IS_ADMIN).setValue("false");
 
 				/* Lets choose the newly created contact to edit it. */
                 userList.select(contactId);
@@ -218,7 +218,7 @@ public class UserController extends UI {
 		 * set a caption that would be shown above the field or description to
 		 * be shown in a tooltip.
 		 */
-        searchField.setInputPrompt("Search contacts");
+        searchField.setInputPrompt("Search users");
 
 		/*
 		 * Granularity for sending events over the wire can be controlled. By
@@ -249,7 +249,7 @@ public class UserController extends UI {
 
     private void initContactList() {
         userList.setContainerDataSource(contactContainer);
-        userList.setVisibleColumns(new String[]{USER_ID, NAME, AGE});
+        userList.setVisibleColumns(new String[]{ID, NAME, AGE, IS_ADMIN, CREATED_DATE});
         userList.setSelectable(true);
         userList.setImmediate(true);
 
@@ -280,7 +280,7 @@ public class UserController extends UI {
         }
 
         public boolean passesFilter(Object itemId, Item item) {
-            String haystack = ("" + item.getItemProperty(USER_ID).getValue()
+            String haystack = ("" + item.getItemProperty(ID).getValue()
                     + item.getItemProperty(NAME).getValue() + item
                     .getItemProperty(AGE).getValue()).toLowerCase();
             return haystack.contains(needle);
@@ -296,6 +296,7 @@ public class UserController extends UI {
 	 * we could be using SQLContainer, JPAContainer or some other to persist the
 	 * data.
 	 */
+
     private static IndexedContainer createDummyDatasource() {
         IndexedContainer ic = new IndexedContainer();
 
@@ -303,21 +304,15 @@ public class UserController extends UI {
             ic.addContainerProperty(p, String.class, "");
         }
 
-		/* Create dummy data by randomly combining first and last names */
-        String[] fnames = { "Peter", "Alice", "Joshua", "Mike", "Olivia",
-                "Nina", "Alex", "Rita", "Dan", "Umberto", "Henrik", "Rene",
-                "Lisa", "Marge" };
-        String[] lnames = { "Smith", "Gordon", "Simpson", "Brown", "Clavel",
-                "Simons", "Verne", "Scott", "Allison", "Gates", "Rowling",
-                "Barks", "Ross", "Schneider", "Tate" };
-        for (int i = 0; i < 100; i++) {
+        List<User> users = userDao.getAllUsers();
+        for (User user : users){
             Object id = ic.addItem();
-            ic.getContainerProperty(id, USER_ID).setValue(
-                    fnames[(int) (fnames.length * Math.random())]);
-            ic.getContainerProperty(id, NAME).setValue(
-                    lnames[(int) (lnames.length * Math.random())]);
+            ic.getContainerProperty(id, ID).setValue(String.valueOf(user.getId()));
+            ic.getContainerProperty(id, NAME).setValue(user.getName());
+            ic.getContainerProperty(id, AGE).setValue(String.valueOf(user.getAge()));
+            ic.getContainerProperty(id, IS_ADMIN).setValue(String.valueOf(user.isAdmin()));
+            ic.getContainerProperty(id, CREATED_DATE).setValue(String.valueOf(user.getCratedDate()));
         }
-
         return ic;
     }
 }
