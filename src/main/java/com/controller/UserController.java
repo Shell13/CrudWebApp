@@ -8,7 +8,9 @@ import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.data.Container;
 import com.vaadin.data.Item;
 import com.vaadin.data.Property;
+import com.vaadin.data.fieldgroup.DefaultFieldGroupFieldFactory;
 import com.vaadin.data.fieldgroup.FieldGroup;
+import com.vaadin.data.fieldgroup.PropertyId;
 import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.event.FieldEvents;
 import com.vaadin.server.VaadinRequest;
@@ -16,6 +18,7 @@ import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.*;
 
 import javax.servlet.annotation.WebServlet;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -30,17 +33,25 @@ public class UserController extends UI {
 
     }
 
+    static {
+        FillingDB.fillDB();
+    }
+
     private Table userList = new Table();
     private TextField searchField = new TextField();
+
+    @PropertyId("property1")
     private TextField nameField = new TextField();
+    @PropertyId("property2")
     private TextField ageField = new TextField();
-    private TextField isAdminField = new TextField();
+    @PropertyId("property3")
+    private CheckBox checkBox = new CheckBox("Admin", false);
+
     private Button addNewUserButton = new Button("New");
     private Button removeUserButton = new Button("Remove");
     private Button saveUserButton = new Button("Save");
     private FormLayout editorLayout = new FormLayout();
     private FieldGroup editorFields = new FieldGroup();
-    private CheckBox checkBox = new CheckBox("Admin", false);
 
     private static final String ID = "ID";
     private static final String NAME = "Name";
@@ -60,7 +71,7 @@ public class UserController extends UI {
          * implementations.
          */
 //    Container contactContainer = getContainer();
-    IndexedContainer contactContainer = createDummyDatasource();
+    IndexedContainer contactContainer = readDatasource();
 
     @Override
     protected void init(VaadinRequest request) {
@@ -115,19 +126,51 @@ public class UserController extends UI {
 
         editorLayout.addComponent(removeUserButton);
 
-//        TextField idField = new TextField();
+        final FieldGroup fieldGroup = new FieldGroup();
+
+        fieldGroup.bindMemberFields(this);
+
+        fieldGroup.setFieldFactory(new DefaultFieldGroupFieldFactory() {
+            @Override
+            public <T extends Field> T createField(final Class<?> type,
+                                                   final Class<T> fieldType) {
+                T field;
+                if (Date.class == type) {
+                    field = (T) new PopupDateField();
+                } else {
+                    field = super.createField(type, fieldType);
+                }
+                field.setWidth(100.0f, Unit.PERCENTAGE);
+                return field;
+            }
+        });
+
+        final FormLayout form = new FormLayout(nameField, ageField, checkBox);
+
+        final Button saveButton = new Button("Save", new Button.ClickListener() {
+            @Override
+            public void buttonClick(final Button.ClickEvent event) {
+                try {
+                    fieldGroup.commit();
+                    Notification.show("Changes committed!",
+                            Notification.Type.TRAY_NOTIFICATION);
+                } catch (final FieldGroup.CommitException e) {
+                    Notification
+                            .show("Commit failed: " + e.getCause().getMessage(),
+                                    Notification.Type.TRAY_NOTIFICATION);
+                }
+            }
+        });
 
 
-        TextField nameField = new TextField();
-        nameField.setInputPrompt("Enter name");
-        nameField.setMaxLength(25);
-        editorLayout.addComponent(nameField);
-
-
-        TextField ageField = new TextField();
-        ageField.setInputPrompt("Enter age");
-        ageField.setMaxLength(3);
-        editorLayout.addComponent(ageField);
+//        nameField.setInputPrompt("Enter name");
+//        nameField.setMaxLength(25);
+//        editorLayout.addComponent(nameField);
+//
+//
+////        ageField.setInputPrompt("Enter age");
+//        ageField.setMaxLength(3);
+//        editorLayout.addComponent(ageField);
 
 
 		/* User interface can be created dynamically to reflect underlying data. */
@@ -142,7 +185,6 @@ public class UserController extends UI {
 //			 */
 //            editorFields.bind(field, fieldName);
 //        }
-        CheckBox checkBox = new CheckBox("Admin", false);
 
         checkBox.addValueChangeListener(new Property.ValueChangeListener() {
             @Override
@@ -154,9 +196,10 @@ public class UserController extends UI {
             }
         });
 
-        editorLayout.addComponent(checkBox);
+        editorLayout.addComponent(form);
 
-        editorLayout.addComponent(saveUserButton);
+        editorLayout.addComponent(saveButton);
+
 
 		/*
 		 * Data can be buffered in the user interface. When doing so, commit()
@@ -206,6 +249,11 @@ public class UserController extends UI {
         removeUserButton.addClickListener(new Button.ClickListener() {
             public void buttonClick(Button.ClickEvent event) {
                 Object userId = userList.getValue();
+
+                Item item = userList.getItem(userId);
+                String str[] = item.toString().split(" ", 2);
+                int id = Integer.parseInt(str[0]);
+                userDao.deleteUser(userDao.getUser(id));
                 userList.removeItem(userId);
             }
         });
@@ -297,7 +345,7 @@ public class UserController extends UI {
 	 * data.
 	 */
 
-    private static IndexedContainer createDummyDatasource() {
+    private static IndexedContainer readDatasource() {
         IndexedContainer ic = new IndexedContainer();
 
         for (String p : fieldNames) {
@@ -310,7 +358,7 @@ public class UserController extends UI {
             ic.getContainerProperty(id, ID).setValue(String.valueOf(user.getId()));
             ic.getContainerProperty(id, NAME).setValue(user.getName());
             ic.getContainerProperty(id, AGE).setValue(String.valueOf(user.getAge()));
-            ic.getContainerProperty(id, IS_ADMIN).setValue(String.valueOf(user.isAdmin()));
+            ic.getContainerProperty(id, IS_ADMIN).setValue(user.isAdmin() == true ? "Yes" : "No");
             ic.getContainerProperty(id, CREATED_DATE).setValue(String.valueOf(user.getCratedDate()));
         }
         return ic;
