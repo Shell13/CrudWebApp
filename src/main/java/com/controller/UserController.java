@@ -8,9 +8,7 @@ import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.data.Container;
 import com.vaadin.data.Item;
 import com.vaadin.data.Property;
-import com.vaadin.data.fieldgroup.DefaultFieldGroupFieldFactory;
 import com.vaadin.data.fieldgroup.FieldGroup;
-import com.vaadin.data.fieldgroup.PropertyId;
 import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.event.FieldEvents;
 import com.vaadin.server.VaadinRequest;
@@ -18,7 +16,7 @@ import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.*;
 
 import javax.servlet.annotation.WebServlet;
-import java.util.Date;
+import java.sql.Date;
 import java.util.List;
 
 /**
@@ -39,18 +37,20 @@ public class UserController extends UI {
 
     private Table userList = new Table();
     private TextField searchField = new TextField();
+    private Window window = new Window("New User");
 
-    @PropertyId("property1")
     private TextField nameField = new TextField();
-    @PropertyId("property2")
     private TextField ageField = new TextField();
-    @PropertyId("property3")
     private CheckBox checkBox = new CheckBox("Admin", false);
 
     private Button addNewUserButton = new Button("New");
     private Button removeUserButton = new Button("Remove");
-    private Button saveUserButton = new Button("Save");
+    private Button saveOldUserButton = new Button("Save");
+    private Button saveNewUserButton = new Button("Save");
+    private Button cancelButton = new Button("Cancel");
+
     private FormLayout editorLayout = new FormLayout();
+    private FormLayout windowLayout = new FormLayout(); //???
     private FieldGroup editorFields = new FieldGroup();
 
     private static final String ID = "ID";
@@ -59,10 +59,10 @@ public class UserController extends UI {
     private static final String IS_ADMIN = "Admin";
     private static final String CREATED_DATE = "Date";
 
-    private static final String[] fieldNames = new String[] {ID, NAME,
+    private static final String[] fieldNames = new String[]{ID, NAME,
             AGE, IS_ADMIN, CREATED_DATE};
 
-    private static final String[] leftFields = new String[]{NAME, AGE};
+    private static final String[] leftFields = new String[]{NAME, AGE};//TODO
 
     private static UserDao userDao = new UserDao();
     /*
@@ -70,8 +70,8 @@ public class UserController extends UI {
          * just a dummy in-memory list, but there are many more practical
          * implementations.
          */
-//    Container contactContainer = getContainer();
-    IndexedContainer contactContainer = readDatasource();
+//    Container userContainer = getContainer();
+    IndexedContainer userContainer = readDatasource();
 
     @Override
     protected void init(VaadinRequest request) {
@@ -79,7 +79,7 @@ public class UserController extends UI {
         initContactList();
         initEditor();
         initSearch();
-        initAddRemoveButtons();
+        initAddRemoveSaveCanselButtons();
     }
 
     private void initLayout() {
@@ -102,7 +102,7 @@ public class UserController extends UI {
         leftLayout.setSizeFull();
 
 		/*
-		 * On the left side, expand the size of the userList so that it uses
+         * On the left side, expand the size of the userList so that it uses
 		 * all the space left after from bottomLeftLayout
 		 */
         leftLayout.setExpandRatio(userList, 1);
@@ -122,83 +122,27 @@ public class UserController extends UI {
         editorLayout.setVisible(false);
     }
 
-    private void initEditor() {
+    private void initEditor() {  //TODO
 
         editorLayout.addComponent(removeUserButton);
 
-        final FieldGroup fieldGroup = new FieldGroup();
-
-        fieldGroup.bindMemberFields(this);
-
-        fieldGroup.setFieldFactory(new DefaultFieldGroupFieldFactory() {
-            @Override
-            public <T extends Field> T createField(final Class<?> type,
-                                                   final Class<T> fieldType) {
-                T field;
-                if (Date.class == type) {
-                    field = (T) new PopupDateField();
-                } else {
-                    field = super.createField(type, fieldType);
-                }
-                field.setWidth(100.0f, Unit.PERCENTAGE);
-                return field;
-            }
-        });
-
-        final FormLayout form = new FormLayout(nameField, ageField, checkBox);
-
-        final Button saveButton = new Button("Save", new Button.ClickListener() {
-            @Override
-            public void buttonClick(final Button.ClickEvent event) {
-                try {
-                    fieldGroup.commit();
-                    Notification.show("Changes committed!",
-                            Notification.Type.TRAY_NOTIFICATION);
-                } catch (final FieldGroup.CommitException e) {
-                    Notification
-                            .show("Commit failed: " + e.getCause().getMessage(),
-                                    Notification.Type.TRAY_NOTIFICATION);
-                }
-            }
-        });
-
-
-//        nameField.setInputPrompt("Enter name");
-//        nameField.setMaxLength(25);
-//        editorLayout.addComponent(nameField);
-//
-//
-////        ageField.setInputPrompt("Enter age");
-//        ageField.setMaxLength(3);
-//        editorLayout.addComponent(ageField);
-
-
 		/* User interface can be created dynamically to reflect underlying data. */
-//        for (String fieldName : leftFields) {
-//            TextField field = new TextField(fieldName);
-//            editorLayout.addComponent(field);
-//            field.setWidth("100%");
-//
-//			/*
-//			 * We use a FieldGroup to connect multiple components to a data
-//			 * source at once.
-//			 */
-//            editorFields.bind(field, fieldName);
-//        }
+        for (String fieldName : leftFields) {
+            TextField field = new TextField(fieldName);
+            editorLayout.addComponent(field);
+            field.setWidth("100%");
+			/*
+			 * We use a FieldGroup to connect multiple components to a data
+			 * source at once.
+			 */
+            editorFields.bind(field, fieldName);
+        }
 
-        checkBox.addValueChangeListener(new Property.ValueChangeListener() {
-            @Override
-            public void valueChange(final Property.ValueChangeEvent event) {
-                final String valueString = String.valueOf(event.getProperty()
-                        .getValue());
-                Notification.show("Value changed:", valueString,
-                        Notification.Type.TRAY_NOTIFICATION);
-            }
-        });
+        editorLayout.addComponent(checkBox);
 
-        editorLayout.addComponent(form);
 
-        editorLayout.addComponent(saveButton);
+
+        editorLayout.addComponent(saveOldUserButton);
 
 
 		/*
@@ -209,16 +153,29 @@ public class UserController extends UI {
         editorFields.setBuffered(false);
     }
 
-    private void initAddRemoveButtons() {
+    private void initAddRemoveSaveCanselButtons() { //TODO
+
         addNewUserButton.addClickListener(new Button.ClickListener() {
             public void buttonClick(Button.ClickEvent event) {
 
-				/*
-				 * Rows in the Container data model are called Item. Here we add
-				 * a new row in the beginning of the list.
-				 */
-                contactContainer.removeAllContainerFilters();
-                Object contactId = contactContainer.addItem(0);
+                HorizontalLayout windowLeftLayout = new HorizontalLayout();
+                windowLeftLayout.setSizeFull();
+                windowLeftLayout.addStyleName("outlined");
+
+                window.setContent(windowLeftLayout);
+                window.setWidth(300.0f, Unit.PIXELS); // размер окна
+                window.center();  // размещение по центру
+                window.setModal(true); // пока открыто окно, задний план не доступен
+                window.setResizable(false);  // изменение размера
+                window.setDraggable(false);  // перетаскивание
+
+                FormLayout content = new FormLayout();
+                window.setContent(content);
+                UI.getCurrent().addWindow(window);
+                windowLeftLayout.addComponent(saveNewUserButton);
+                windowLeftLayout.addComponent(cancelButton);
+
+				userContainer.removeAllContainerFilters();
 
 
 				/*
@@ -227,36 +184,131 @@ public class UserController extends UI {
 				 */
                 nameField.setInputPrompt("Enter name");
                 ageField.setInputPrompt("Enter age");
-                checkBox.addValueChangeListener(new Property.ValueChangeListener() {
-                    @Override
-                    public void valueChange(final Property.ValueChangeEvent event) {
-                        final String valueString = String.valueOf(event.getProperty()
-                                .getValue());
-                        Notification.show("Value changed:", valueString,
-                                Notification.Type.TRAY_NOTIFICATION);
-                    }
-                });
 
-                userList.getContainerProperty(nameField, NAME).setValue("Name");
-                userList.getContainerProperty(ageField, AGE).setValue("");
-                userList.getContainerProperty(checkBox, IS_ADMIN).setValue("false");
 
-				/* Lets choose the newly created contact to edit it. */
-                userList.select(contactId);
+                content.addComponent(nameField);
+                content.addComponent(ageField);
+                content.addComponent(checkBox);
+                content.addComponent(windowLeftLayout);
             }
         });
+
+        saveOldUserButton.addClickListener(new Button.ClickListener() {
+            @Override
+            public void buttonClick(Button.ClickEvent event) {
+                Object userId = userList.getValue();
+
+                Item item = userList.getItem(userId);
+                System.out.println(item);
+                String str[] = item.toString().split(" ");
+                int id = Integer.parseInt(str[0]);
+                String name = str[1];
+                int age = Integer.parseInt(str[2]);
+                boolean isAdmin = str[3].equals("Yes");
+
+
+//                String tmpName = nameField.getValue();
+//                int tmpAge = Integer.parseInt(ageField.getValue());
+//                boolean is = checkBox.getValue();
+
+//                User tmp = new User(tmpName, tmpAge, is);
+//                System.out.println(tmp);
+
+
+                User oldUser = userDao.getUser(id);
+                oldUser.setName(name);
+                oldUser.setAge(age);
+                oldUser.setAdmin(isAdmin);
+                userDao.saveOrUpdateUser(oldUser);
+                System.out.println(oldUser);
+
+                Notification.show("User saved!",  //todo
+                        Notification.Type.TRAY_NOTIFICATION);
+            }
+        });
+
+
+        saveNewUserButton.addClickListener(new Button.ClickListener() {
+            public void buttonClick(Button.ClickEvent event) {
+
+                nameField.setInputPrompt("Enter name");
+                nameField.setMaxLength(25);
+                editorLayout.addComponent(nameField);
+
+                ageField.setInputPrompt("Enter age");
+                ageField.setMaxLength(3);
+                editorLayout.addComponent(ageField);
+
+                String name = nameField.getValue();
+                int age = Integer.parseInt(ageField.getValue());
+                boolean isAdmin = checkBox.getValue();
+
+                User user = new User();
+                user.setName(name);
+                user.setAge(age);
+                user.setAdmin(isAdmin);
+
+                if (userDao.saveOrUpdateUser(user)) {
+                    Notification.show("New user added!",
+                            Notification.Type.TRAY_NOTIFICATION);
+                }
+
+                // Создаю строку для нового юзера и заполняюю ее данными
+                Object newUserId = userContainer.addItem();
+                Item row = userContainer.getItem(newUserId);
+
+                row.getItemProperty(ID).setValue("00");
+                row.getItemProperty(NAME).setValue(name);
+                row.getItemProperty(AGE).setValue(String.valueOf(age));
+                row.getItemProperty(IS_ADMIN).setValue(isAdmin == true ? "Yes" : "No");
+                row.getItemProperty(CREATED_DATE).setValue(String.valueOf(new Date(System.currentTimeMillis())));
+
+                // очищаю поля
+                nameField.setValue("");
+                ageField.setValue("");
+                checkBox.setValue(false);
+                window.close();
+            }
+        });
+
 
         removeUserButton.addClickListener(new Button.ClickListener() {
             public void buttonClick(Button.ClickEvent event) {
                 Object userId = userList.getValue();
 
+                /* Из таблицы userList получаю item (содержит данные из строки)
+                 * С помощью split() получаю массив строк, где первый элемент
+                 * это id юзера, которого нужно удалить из БД
+                 */
                 Item item = userList.getItem(userId);
-                String str[] = item.toString().split(" ", 2);
+                System.out.println(item);
+
+                String str[] = item.toString().split(" "); //todo
                 int id = Integer.parseInt(str[0]);
-                userDao.deleteUser(userDao.getUser(id));
+
+                try {
+                    userDao.deleteUser(userDao.getUser(id));
+                    Notification.show("Removed",
+                            Notification.Type.TRAY_NOTIFICATION);
+                } catch (Exception e) {
+                    Notification
+                            .show("Remove failed: " + e.getCause().getMessage(),
+                                    Notification.Type.TRAY_NOTIFICATION);
+                }
                 userList.removeItem(userId);
             }
         });
+
+        cancelButton.addClickListener(new Button.ClickListener() {
+            @Override
+            public void buttonClick(Button.ClickEvent event) {
+                nameField.setValue("");
+                ageField.setValue("");
+                checkBox.setValue(false);
+                window.close();
+            }
+        });
+
     }
 
     private void initSearch() {
@@ -266,7 +318,7 @@ public class UserController extends UI {
 		 * set a caption that would be shown above the field or description to
 		 * be shown in a tooltip.
 		 */
-        searchField.setInputPrompt("Search users");
+        searchField.setInputPrompt("Search users");//TODO
 
 		/*
 		 * Granularity for sending events over the wire can be controlled. By
@@ -287,23 +339,29 @@ public class UserController extends UI {
         searchField.addTextChangeListener(new FieldEvents.TextChangeListener() {
             public void textChange(final FieldEvents.TextChangeEvent event) {
 
-				/* Reset the filter for the contactContainer. */
-                contactContainer.removeAllContainerFilters();
-                contactContainer.addContainerFilter(new ContactFilter(event
+				/* Reset the filter for the userContainer. */
+                userContainer.removeAllContainerFilters();
+                userContainer.addContainerFilter(new ContactFilter(event
                         .getText()));
             }
         });
     }
 
     private void initContactList() {
-        userList.setContainerDataSource(contactContainer);
+        userList.setContainerDataSource(userContainer);
         userList.setVisibleColumns(new String[]{ID, NAME, AGE, IS_ADMIN, CREATED_DATE});
         userList.setSelectable(true);
         userList.setImmediate(true);
 
         userList.addValueChangeListener(new Property.ValueChangeListener() {
             public void valueChange(Property.ValueChangeEvent event) {
-                Object contactId = userList.getValue();
+
+                Object userId = userList.getValue();
+//                Item item = userList.getItem(userId);
+//                System.out.println(item);
+//                String str[] = item.toString().split(" ");
+//                boolean isAdmin = str[3].equals("Yes");//
+//                checkBox.setValue(isAdmin);
 
 				/*
 				 * When a contact is selected from the list, we want to show
@@ -311,16 +369,21 @@ public class UserController extends UI {
 				 * FieldGroup that binds all the fields to the corresponding
 				 * Properties in our contact at once.
 				 */
-                if (contactId != null)
-                    editorFields.setItemDataSource(userList
-                            .getItem(contactId));
+                if (userId != null) {
+                    editorFields.setItemDataSource(userList.getItem(userId));
+                    Item item = userList.getItem(userId);
+                    System.out.println(item);
+                    String str[] = item.toString().split(" ");
+                    boolean isAdmin = str[3].equals("Yes");//
+                    checkBox.setValue(isAdmin);
 
-                editorLayout.setVisible(contactId != null);
+                }
+                editorLayout.setVisible(userId != null);
             }
         });
     }
 
-    private class ContactFilter implements Container.Filter {
+    private class ContactFilter implements Container.Filter { //TODO
         private String needle;
 
         public ContactFilter(String needle) {
@@ -353,7 +416,7 @@ public class UserController extends UI {
         }
 
         List<User> users = userDao.getAllUsers();
-        for (User user : users){
+        for (User user : users) {
             Object id = ic.addItem();
             ic.getContainerProperty(id, ID).setValue(String.valueOf(user.getId()));
             ic.getContainerProperty(id, NAME).setValue(user.getName());
