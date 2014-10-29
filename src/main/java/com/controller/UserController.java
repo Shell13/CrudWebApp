@@ -28,7 +28,6 @@ public class UserController extends UI {
     @WebServlet(value = "/*", asyncSupported = true)
     @VaadinServletConfiguration(productionMode = false, ui = UserController.class)
     public static class Servlet extends VaadinServlet {
-
     }
 
     static {
@@ -205,30 +204,18 @@ public class UserController extends UI {
                 Object userId = userList.getValue();
 
                 Item item = userList.getItem(userId);
-                System.out.println(item);
                 String str[] = item.toString().split(" ");
                 int id = Integer.parseInt(str[0]);
                 String name = str[1];
                 int age = Integer.parseInt(str[2]);
                 boolean isAdmin = Boolean.parseBoolean(str[3]);
-//                boolean isAdmin = str[3].equals("Yes");
                 System.out.println(isAdmin);
-
-
-//                String tmpName = nameField.getValue();
-//                int tmpAge = Integer.parseInt(ageField.getValue());
-//                boolean is = checkBox.getValue();
-
-//                User tmp = new User(tmpName, tmpAge, is);
-//                System.out.println(tmp);
-
 
                 User oldUser = userDao.getUser(id);
                 oldUser.setName(name);
                 oldUser.setAge(age);
                 oldUser.setAdmin(isAdmin);
                 userDao.saveOrUpdateUser(oldUser);
-                System.out.println(oldUser);
 
                 Notification.show("User saved!",  //todo
                         Notification.Type.TRAY_NOTIFICATION);
@@ -290,7 +277,6 @@ public class UserController extends UI {
                  * это id юзера, которого нужно удалить из БД
                  */
                 Item item = userList.getItem(userId);
-                System.out.println(item);
 
                 String str[] = item.toString().split(" "); //todo
                 int id = Integer.parseInt(str[0]);
@@ -380,13 +366,6 @@ public class UserController extends UI {
 				 */
                 if (userId != null) {
                     editorFields.setItemDataSource(userList.getItem(userId));
-//                    Item item = userList.getItem(userId);
-//                    System.out.println(item);
-//                    String str[] = item.toString().split(" ");
-////                    boolean isAdmin = str[3].equals("Yes");
-//                    boolean isAdmin = Boolean.parseBoolean(str[3]);
-//                    checkBox.setValue(isAdmin);
-
                 }
                 editorLayout.setVisible(userId != null);
             }
