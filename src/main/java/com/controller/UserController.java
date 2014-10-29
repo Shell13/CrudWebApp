@@ -32,7 +32,7 @@ public class UserController extends UI {
     }
 
     static {
-        FillingDB.fillDB();
+//        FillingDB.fillDB(); //todo
     }
 
     private Table userList = new Table();
@@ -42,6 +42,10 @@ public class UserController extends UI {
     private TextField nameField = new TextField();
     private TextField ageField = new TextField();
     private CheckBox checkBox = new CheckBox("Admin", false);
+
+    private TextField windowNameField = new TextField("Name");
+    private TextField windowAgeField = new TextField("Age");
+    private CheckBox windowCheckBox = new CheckBox("Admin", false);
 
     private Button addNewUserButton = new Button("New");
     private Button removeUserButton = new Button("Remove");
@@ -127,24 +131,26 @@ public class UserController extends UI {
         editorLayout.addComponent(removeUserButton);
 
 		/* User interface can be created dynamically to reflect underlying data. */
-        for (String fieldName : leftFields) {
-            TextField field = new TextField(fieldName);
-            editorLayout.addComponent(field);
-            field.setWidth("100%");
-			/*
-			 * We use a FieldGroup to connect multiple components to a data
-			 * source at once.
-			 */
-            editorFields.bind(field, fieldName);
-        }
-
-        editorLayout.addComponent(checkBox);
 
 
+        TextField editNameField = new TextField(NAME);
+        editNameField.setMaxLength(25);
+
+        TextField editAgeField = new TextField(AGE);
+        editAgeField.setMaxLength(3);
+
+
+        CheckBox editIsAdmin = new CheckBox(IS_ADMIN);
+
+        editorLayout.addComponent(editNameField);
+        editorLayout.addComponent(editAgeField);
+        editorLayout.addComponent(editIsAdmin);
+
+        editorFields.bind(editNameField, NAME);
+        editorFields.bind(editAgeField, AGE);
+        editorFields.bind(editIsAdmin, IS_ADMIN);
 
         editorLayout.addComponent(saveOldUserButton);
-
-
 		/*
 		 * Data can be buffered in the user interface. When doing so, commit()
 		 * writes the changes to the data source. Here we choose to write the
@@ -182,13 +188,13 @@ public class UserController extends UI {
 				 * Each Item has a set of Properties that hold values. Here we
 				 * set a couple of those.
 				 */
-                nameField.setInputPrompt("Enter name");
-                ageField.setInputPrompt("Enter age");
+                windowNameField.setInputPrompt("Enter name");
+                windowAgeField.setInputPrompt("Enter age");
 
 
-                content.addComponent(nameField);
-                content.addComponent(ageField);
-                content.addComponent(checkBox);
+                content.addComponent(windowNameField);
+                content.addComponent(windowAgeField);
+                content.addComponent(windowCheckBox);
                 content.addComponent(windowLeftLayout);
             }
         });
@@ -204,7 +210,9 @@ public class UserController extends UI {
                 int id = Integer.parseInt(str[0]);
                 String name = str[1];
                 int age = Integer.parseInt(str[2]);
-                boolean isAdmin = str[3].equals("Yes");
+                boolean isAdmin = Boolean.parseBoolean(str[3]);
+//                boolean isAdmin = str[3].equals("Yes");
+                System.out.println(isAdmin);
 
 
 //                String tmpName = nameField.getValue();
@@ -231,17 +239,17 @@ public class UserController extends UI {
         saveNewUserButton.addClickListener(new Button.ClickListener() {
             public void buttonClick(Button.ClickEvent event) {
 
-                nameField.setInputPrompt("Enter name");
-                nameField.setMaxLength(25);
-                editorLayout.addComponent(nameField);
+                windowNameField.setInputPrompt("Enter name");
+                windowNameField.setMaxLength(25);
+                windowLayout.addComponent(windowNameField);
 
-                ageField.setInputPrompt("Enter age");
-                ageField.setMaxLength(3);
-                editorLayout.addComponent(ageField);
+                windowAgeField.setInputPrompt("Enter age");
+                windowAgeField.setMaxLength(3);
+                windowLayout.addComponent(windowAgeField); //todo
 
-                String name = nameField.getValue();
-                int age = Integer.parseInt(ageField.getValue());
-                boolean isAdmin = checkBox.getValue();
+                String name = windowNameField.getValue();
+                int age = Integer.parseInt(windowAgeField.getValue());
+                boolean isAdmin = windowCheckBox.getValue();
 
                 User user = new User();
                 user.setName(name);
@@ -260,13 +268,14 @@ public class UserController extends UI {
                 row.getItemProperty(ID).setValue("00");
                 row.getItemProperty(NAME).setValue(name);
                 row.getItemProperty(AGE).setValue(String.valueOf(age));
-                row.getItemProperty(IS_ADMIN).setValue(isAdmin == true ? "Yes" : "No");
+                row.getItemProperty(IS_ADMIN).setValue(String.valueOf(isAdmin));
+//                row.getItemProperty(IS_ADMIN).setValue(isAdmin == true ? "Yes" : "No");
                 row.getItemProperty(CREATED_DATE).setValue(String.valueOf(new Date(System.currentTimeMillis())));
 
                 // очищаю поля
-                nameField.setValue("");
-                ageField.setValue("");
-                checkBox.setValue(false);
+                windowNameField.setValue("");
+                windowAgeField.setValue("");
+                windowCheckBox.setValue(false);
                 window.close();
             }
         });
@@ -302,9 +311,9 @@ public class UserController extends UI {
         cancelButton.addClickListener(new Button.ClickListener() {
             @Override
             public void buttonClick(Button.ClickEvent event) {
-                nameField.setValue("");
-                ageField.setValue("");
-                checkBox.setValue(false);
+                windowNameField.setValue("");
+                windowAgeField.setValue("");
+                windowCheckBox.setValue(false);
                 window.close();
             }
         });
@@ -371,11 +380,12 @@ public class UserController extends UI {
 				 */
                 if (userId != null) {
                     editorFields.setItemDataSource(userList.getItem(userId));
-                    Item item = userList.getItem(userId);
-                    System.out.println(item);
-                    String str[] = item.toString().split(" ");
-                    boolean isAdmin = str[3].equals("Yes");//
-                    checkBox.setValue(isAdmin);
+//                    Item item = userList.getItem(userId);
+//                    System.out.println(item);
+//                    String str[] = item.toString().split(" ");
+////                    boolean isAdmin = str[3].equals("Yes");
+//                    boolean isAdmin = Boolean.parseBoolean(str[3]);
+//                    checkBox.setValue(isAdmin);
 
                 }
                 editorLayout.setVisible(userId != null);
@@ -421,7 +431,7 @@ public class UserController extends UI {
             ic.getContainerProperty(id, ID).setValue(String.valueOf(user.getId()));
             ic.getContainerProperty(id, NAME).setValue(user.getName());
             ic.getContainerProperty(id, AGE).setValue(String.valueOf(user.getAge()));
-            ic.getContainerProperty(id, IS_ADMIN).setValue(user.isAdmin() == true ? "Yes" : "No");
+            ic.getContainerProperty(id, IS_ADMIN).setValue(String.valueOf(user.isAdmin())); // == true ? "Yes" : "No");
             ic.getContainerProperty(id, CREATED_DATE).setValue(String.valueOf(user.getCratedDate()));
         }
         return ic;
