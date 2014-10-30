@@ -1,9 +1,9 @@
 package com.controller;
 
-//import org.springframework.stereotype.Controller;
-
 import com.dao.UserDao;
 import com.model.User;
+import com.utils.FillingDB;
+
 import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.data.Container;
 import com.vaadin.data.Item;
@@ -22,7 +22,6 @@ import java.util.List;
 /**
  * Created by Roman on 21.10.2014.
  */
-//@Controller
 public class UserController extends UI {
 
     @WebServlet(value = "/*", asyncSupported = true)
@@ -31,16 +30,13 @@ public class UserController extends UI {
     }
 
     static {
-//        FillingDB.fillDB(); //todo
+        //заполнение тестовой БД
+        FillingDB.fillDB();
     }
 
     private Table userList = new Table();
     private TextField searchField = new TextField();
     private Window window = new Window("New User");
-
-    private TextField nameField = new TextField();
-    private TextField ageField = new TextField();
-    private CheckBox checkBox = new CheckBox("Admin", false);
 
     private TextField windowNameField = new TextField("Name");
     private TextField windowAgeField = new TextField("Age");
@@ -53,7 +49,7 @@ public class UserController extends UI {
     private Button cancelButton = new Button("Cancel");
 
     private FormLayout editorLayout = new FormLayout();
-    private FormLayout windowLayout = new FormLayout(); //???
+    private FormLayout windowLayout = new FormLayout();
     private FieldGroup editorFields = new FieldGroup();
 
     private static final String ID = "ID";
@@ -65,16 +61,9 @@ public class UserController extends UI {
     private static final String[] fieldNames = new String[]{ID, NAME,
             AGE, IS_ADMIN, CREATED_DATE};
 
-    private static final String[] leftFields = new String[]{NAME, AGE};//TODO
-
     private static UserDao userDao = new UserDao();
-    /*
-         * Any component can be bound to an external data source. This example uses
-         * just a dummy in-memory list, but there are many more practical
-         * implementations.
-         */
-//    Container userContainer = getContainer();
-    IndexedContainer userContainer = readDatasource();
+
+    private IndexedContainer userContainer = readDatasource();
 
     @Override
     protected void init(VaadinRequest request) {
@@ -87,7 +76,6 @@ public class UserController extends UI {
 
     private void initLayout() {
 
-		/* Root of the user interface component tree is set */
         HorizontalSplitPanel splitPanel = new HorizontalSplitPanel();
         setContent(splitPanel);
 
@@ -96,6 +84,7 @@ public class UserController extends UI {
         splitPanel.addComponent(leftLayout);
         splitPanel.addComponent(editorLayout);
         leftLayout.addComponent(userList);
+
         HorizontalLayout bottomLeftLayout = new HorizontalLayout();
         leftLayout.addComponent(bottomLeftLayout);
         bottomLeftLayout.addComponent(searchField);
@@ -112,7 +101,7 @@ public class UserController extends UI {
         userList.setSizeFull();
 
 		/*
-		 * In the bottomLeftLayout, searchField takes all the width there is
+         * In the bottomLeftLayout, searchField takes all the width there is
 		 * after adding addNewUserButton. The height of the layout is defined
 		 * by the tallest component.
 		 */
@@ -125,7 +114,7 @@ public class UserController extends UI {
         editorLayout.setVisible(false);
     }
 
-    private void initEditor() {  //TODO
+    private void initEditor() {
 
         editorLayout.addComponent(removeUserButton);
 
@@ -138,7 +127,6 @@ public class UserController extends UI {
         TextField editAgeField = new TextField(AGE);
         editAgeField.setMaxLength(3);
 
-
         CheckBox editIsAdmin = new CheckBox(IS_ADMIN);
 
         editorLayout.addComponent(editNameField);
@@ -150,7 +138,7 @@ public class UserController extends UI {
         editorFields.bind(editIsAdmin, IS_ADMIN);
 
         editorLayout.addComponent(saveOldUserButton);
-		/*
+        /*
 		 * Data can be buffered in the user interface. When doing so, commit()
 		 * writes the changes to the data source. Here we choose to write the
 		 * changes automatically without calling commit().
@@ -158,7 +146,7 @@ public class UserController extends UI {
         editorFields.setBuffered(false);
     }
 
-    private void initAddRemoveSaveCanselButtons() { //TODO
+    private void initAddRemoveSaveCanselButtons() {
 
         addNewUserButton.addClickListener(new Button.ClickListener() {
             public void buttonClick(Button.ClickEvent event) {
@@ -168,11 +156,11 @@ public class UserController extends UI {
                 windowLeftLayout.addStyleName("outlined");
 
                 window.setContent(windowLeftLayout);
-                window.setWidth(300.0f, Unit.PIXELS); // размер окна
-                window.center();  // размещение по центру
-                window.setModal(true); // пока открыто окно, задний план не доступен
-                window.setResizable(false);  // изменение размера
-                window.setDraggable(false);  // перетаскивание
+                window.setWidth(300.0f, Unit.PIXELS); // Window size
+                window.center();  // Sets this window to be centered
+                window.setModal(true); // Sets window modality
+                window.setResizable(false);  // change the size
+                window.setDraggable(false);  // window can be dragged
 
                 FormLayout content = new FormLayout();
                 window.setContent(content);
@@ -180,16 +168,16 @@ public class UserController extends UI {
                 windowLeftLayout.addComponent(saveNewUserButton);
                 windowLeftLayout.addComponent(cancelButton);
 
-				userContainer.removeAllContainerFilters();
-
+                userContainer.removeAllContainerFilters();
 
 				/*
 				 * Each Item has a set of Properties that hold values. Here we
 				 * set a couple of those.
 				 */
                 windowNameField.setInputPrompt("Enter name");
+                windowNameField.setMaxLength(25);
                 windowAgeField.setInputPrompt("Enter age");
-
+                windowAgeField.setMaxLength(3);
 
                 content.addComponent(windowNameField);
                 content.addComponent(windowAgeField);
@@ -201,15 +189,25 @@ public class UserController extends UI {
         saveOldUserButton.addClickListener(new Button.ClickListener() {
             @Override
             public void buttonClick(Button.ClickEvent event) {
-                Object userId = userList.getValue();
 
+                // little magic
+                Object userId = userList.getValue();
                 Item item = userList.getItem(userId);
                 String str[] = item.toString().split(" ");
                 int id = Integer.parseInt(str[0]);
+
                 String name = str[1];
-                int age = Integer.parseInt(str[2]);
+                if (name.equals("")) name = "Anonymous#";
+
+                int age;
+                try {
+                    age = Integer.parseInt(str[2]);
+                } catch (NumberFormatException e) {
+                    Notification.show("Warning!", "Enter digits only!", Notification.Type.WARNING_MESSAGE);
+                    return;
+                }
+
                 boolean isAdmin = Boolean.parseBoolean(str[3]);
-                System.out.println(isAdmin);
 
                 User oldUser = userDao.getUser(id);
                 oldUser.setName(name);
@@ -217,11 +215,9 @@ public class UserController extends UI {
                 oldUser.setAdmin(isAdmin);
                 userDao.saveOrUpdateUser(oldUser);
 
-                Notification.show("User saved!",  //todo
-                        Notification.Type.TRAY_NOTIFICATION);
+                Notification.show("User saved!", Notification.Type.TRAY_NOTIFICATION);
             }
         });
-
 
         saveNewUserButton.addClickListener(new Button.ClickListener() {
             public void buttonClick(Button.ClickEvent event) {
@@ -230,12 +226,23 @@ public class UserController extends UI {
                 windowNameField.setMaxLength(25);
                 windowLayout.addComponent(windowNameField);
 
-                windowAgeField.setInputPrompt("Enter age");
+                windowAgeField.setInputPrompt("Enter age. Only digits!");
                 windowAgeField.setMaxLength(3);
-                windowLayout.addComponent(windowAgeField); //todo
+                windowLayout.addComponent(windowAgeField);
 
                 String name = windowNameField.getValue();
-                int age = Integer.parseInt(windowAgeField.getValue());
+                if (name.equals("")) name = "Anonymous#";
+                int age;
+
+                try {
+                    age = Integer.parseInt(windowAgeField.getValue());
+                } catch (NumberFormatException e) {
+                    Notification.show("Warning!", "Enter digits only!",
+                            Notification.Type.WARNING_MESSAGE);
+                    window.close();
+                    return;
+                }
+
                 boolean isAdmin = windowCheckBox.getValue();
 
                 User user = new User();
@@ -252,14 +259,14 @@ public class UserController extends UI {
                 Object newUserId = userContainer.addItem();
                 Item row = userContainer.getItem(newUserId);
 
+
                 row.getItemProperty(ID).setValue("00");
                 row.getItemProperty(NAME).setValue(name);
                 row.getItemProperty(AGE).setValue(String.valueOf(age));
                 row.getItemProperty(IS_ADMIN).setValue(String.valueOf(isAdmin));
-//                row.getItemProperty(IS_ADMIN).setValue(isAdmin == true ? "Yes" : "No");
                 row.getItemProperty(CREATED_DATE).setValue(String.valueOf(new Date(System.currentTimeMillis())));
 
-                // очищаю поля
+                // clearing fields
                 windowNameField.setValue("");
                 windowAgeField.setValue("");
                 windowCheckBox.setValue(false);
@@ -278,7 +285,7 @@ public class UserController extends UI {
                  */
                 Item item = userList.getItem(userId);
 
-                String str[] = item.toString().split(" "); //todo
+                String str[] = item.toString().split(" ");
                 int id = Integer.parseInt(str[0]);
 
                 try {
@@ -313,7 +320,7 @@ public class UserController extends UI {
 		 * set a caption that would be shown above the field or description to
 		 * be shown in a tooltip.
 		 */
-        searchField.setInputPrompt("Search users");//TODO
+        searchField.setInputPrompt("Search users");
 
 		/*
 		 * Granularity for sending events over the wire can be controlled. By
@@ -336,8 +343,7 @@ public class UserController extends UI {
 
 				/* Reset the filter for the userContainer. */
                 userContainer.removeAllContainerFilters();
-                userContainer.addContainerFilter(new ContactFilter(event
-                        .getText()));
+                userContainer.addContainerFilter(new ContactFilter(event.getText()));
             }
         });
     }
@@ -352,11 +358,6 @@ public class UserController extends UI {
             public void valueChange(Property.ValueChangeEvent event) {
 
                 Object userId = userList.getValue();
-//                Item item = userList.getItem(userId);
-//                System.out.println(item);
-//                String str[] = item.toString().split(" ");
-//                boolean isAdmin = str[3].equals("Yes");//
-//                checkBox.setValue(isAdmin);
 
 				/*
 				 * When a contact is selected from the list, we want to show
@@ -381,8 +382,8 @@ public class UserController extends UI {
 
         public boolean passesFilter(Object itemId, Item item) {
             String haystack = ("" + item.getItemProperty(ID).getValue()
-                    + item.getItemProperty(NAME).getValue() + item
-                    .getItemProperty(AGE).getValue()).toLowerCase();
+                    + item.getItemProperty(NAME).getValue()
+                    + item.getItemProperty(AGE).getValue()).toLowerCase();
             return haystack.contains(needle);
         }
 
@@ -391,11 +392,6 @@ public class UserController extends UI {
         }
     }
 
-    /*
-	 * Generate some in-memory example data to play with. In a real application
-	 * we could be using SQLContainer, JPAContainer or some other to persist the
-	 * data.
-	 */
 
     private static IndexedContainer readDatasource() {
         IndexedContainer ic = new IndexedContainer();
