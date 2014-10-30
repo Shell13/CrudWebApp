@@ -3,7 +3,6 @@ package com.controller;
 import com.dao.UserDao;
 import com.model.User;
 import com.utils.FillingDB;
-
 import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.data.Container;
 import com.vaadin.data.Item;
@@ -31,7 +30,7 @@ public class UserController extends UI {
 
     static {
         //заполнение тестовой БД
-        FillingDB.fillDB();
+        FillingDB.fillDB(); //TODO
     }
 
     private Table userList = new Table();
@@ -49,7 +48,6 @@ public class UserController extends UI {
     private Button cancelButton = new Button("Cancel");
 
     private FormLayout editorLayout = new FormLayout();
-    private FormLayout windowLayout = new FormLayout();
     private FieldGroup editorFields = new FieldGroup();
 
     private static final String ID = "ID";
@@ -71,7 +69,7 @@ public class UserController extends UI {
         initContactList();
         initEditor();
         initSearch();
-        initAddRemoveSaveCanselButtons();
+        initAddRemoveSaveCancelButtons();
     }
 
     private void initLayout() {
@@ -118,14 +116,13 @@ public class UserController extends UI {
 
         editorLayout.addComponent(removeUserButton);
 
-		/* User interface can be created dynamically to reflect underlying data. */
-
-
         TextField editNameField = new TextField(NAME);
         editNameField.setMaxLength(25);
+        editNameField.setInputPrompt("Enter name");
 
         TextField editAgeField = new TextField(AGE);
         editAgeField.setMaxLength(3);
+        editAgeField.setInputPrompt("Enter age");
 
         CheckBox editIsAdmin = new CheckBox(IS_ADMIN);
 
@@ -139,23 +136,23 @@ public class UserController extends UI {
 
         editorLayout.addComponent(saveOldUserButton);
         /*
-		 * Data can be buffered in the user interface. When doing so, commit()
+         * Data can be buffered in the user interface. When doing so, commit()
 		 * writes the changes to the data source. Here we choose to write the
 		 * changes automatically without calling commit().
 		 */
         editorFields.setBuffered(false);
     }
-
-    private void initAddRemoveSaveCanselButtons() {
+    @SuppressWarnings("unchecked")
+    private void initAddRemoveSaveCancelButtons() {
 
         addNewUserButton.addClickListener(new Button.ClickListener() {
             public void buttonClick(Button.ClickEvent event) {
 
-                HorizontalLayout windowLeftLayout = new HorizontalLayout();
-                windowLeftLayout.setSizeFull();
-                windowLeftLayout.addStyleName("outlined");
+                HorizontalLayout windowLayout = new HorizontalLayout();
+                windowLayout.setSizeFull();
+                windowLayout.addStyleName("outlined");
 
-                window.setContent(windowLeftLayout);
+                window.setContent(windowLayout);
                 window.setWidth(300.0f, Unit.PIXELS); // Window size
                 window.center();  // Sets this window to be centered
                 window.setModal(true); // Sets window modality
@@ -165,15 +162,11 @@ public class UserController extends UI {
                 FormLayout content = new FormLayout();
                 window.setContent(content);
                 UI.getCurrent().addWindow(window);
-                windowLeftLayout.addComponent(saveNewUserButton);
-                windowLeftLayout.addComponent(cancelButton);
+                windowLayout.addComponent(saveNewUserButton);
+                windowLayout.addComponent(cancelButton);
 
                 userContainer.removeAllContainerFilters();
 
-				/*
-				 * Each Item has a set of Properties that hold values. Here we
-				 * set a couple of those.
-				 */
                 windowNameField.setInputPrompt("Enter name");
                 windowNameField.setMaxLength(25);
                 windowAgeField.setInputPrompt("Enter age");
@@ -182,7 +175,7 @@ public class UserController extends UI {
                 content.addComponent(windowNameField);
                 content.addComponent(windowAgeField);
                 content.addComponent(windowCheckBox);
-                content.addComponent(windowLeftLayout);
+                content.addComponent(windowLayout);
             }
         });
 
@@ -197,13 +190,13 @@ public class UserController extends UI {
                 int id = Integer.parseInt(str[0]);
 
                 String name = str[1];
-                if (name.equals("")) name = "Anonymous#";
+                if (name.equals("")) name = "Unknown";
 
                 int age;
                 try {
                     age = Integer.parseInt(str[2]);
                 } catch (NumberFormatException e) {
-                    Notification.show("Warning!", "Enter digits only!", Notification.Type.WARNING_MESSAGE);
+                    Notification.show("Warning!", "Enter digits!", Notification.Type.WARNING_MESSAGE);
                     return;
                 }
 
@@ -222,22 +215,14 @@ public class UserController extends UI {
         saveNewUserButton.addClickListener(new Button.ClickListener() {
             public void buttonClick(Button.ClickEvent event) {
 
-                windowNameField.setInputPrompt("Enter name");
-                windowNameField.setMaxLength(25);
-                windowLayout.addComponent(windowNameField);
-
-                windowAgeField.setInputPrompt("Enter age. Only digits!");
-                windowAgeField.setMaxLength(3);
-                windowLayout.addComponent(windowAgeField);
-
                 String name = windowNameField.getValue();
-                if (name.equals("")) name = "Anonymous#";
+                if (name.equals("")) name = "Unknown";
                 int age;
 
                 try {
                     age = Integer.parseInt(windowAgeField.getValue());
                 } catch (NumberFormatException e) {
-                    Notification.show("Warning!", "Enter digits only!",
+                    Notification.show("Warning!", "Enter digits!",
                             Notification.Type.WARNING_MESSAGE);
                     window.close();
                     return;
@@ -373,7 +358,7 @@ public class UserController extends UI {
         });
     }
 
-    private class ContactFilter implements Container.Filter { //TODO
+    private class ContactFilter implements Container.Filter {
         private String needle;
 
         public ContactFilter(String needle) {
@@ -392,7 +377,7 @@ public class UserController extends UI {
         }
     }
 
-
+    @SuppressWarnings("unchecked")
     private static IndexedContainer readDatasource() {
         IndexedContainer ic = new IndexedContainer();
 
@@ -406,7 +391,7 @@ public class UserController extends UI {
             ic.getContainerProperty(id, ID).setValue(String.valueOf(user.getId()));
             ic.getContainerProperty(id, NAME).setValue(user.getName());
             ic.getContainerProperty(id, AGE).setValue(String.valueOf(user.getAge()));
-            ic.getContainerProperty(id, IS_ADMIN).setValue(String.valueOf(user.isAdmin())); // == true ? "Yes" : "No");
+            ic.getContainerProperty(id, IS_ADMIN).setValue(String.valueOf(user.isAdmin()));
             ic.getContainerProperty(id, CREATED_DATE).setValue(String.valueOf(user.getCratedDate()));
         }
         return ic;

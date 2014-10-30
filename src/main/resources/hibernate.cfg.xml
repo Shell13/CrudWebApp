@@ -18,7 +18,7 @@
 
         <property name="hibernate.current_session_context_class">thread</property>
 
-        <!-- Echo all executed SQL to stdout -->
+        <!-- Echo all executed SQL to show -->
         <!--<property name="show_sql">true</property>-->
 
         <!-- Names the annotated entity class -->
