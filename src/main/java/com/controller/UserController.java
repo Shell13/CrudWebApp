@@ -1,8 +1,10 @@
 package com.controller;
 
 import com.dao.UserDao;
+import com.dao.UserDaoInterface;
 import com.model.User;
 import com.utils.FillingDB;
+import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.data.Container;
 import com.vaadin.data.Item;
@@ -21,6 +23,8 @@ import java.util.List;
 /**
  * Created by Roman on 21.10.2014.
  */
+
+@Theme("mytheme")
 public class UserController extends UI {
 
     @WebServlet(value = "/*", asyncSupported = true)
@@ -29,7 +33,7 @@ public class UserController extends UI {
     }
 
     static {
-        //заполнение тестовой БД
+        //filling the test database
         FillingDB.fillDB(); //TODO
     }
 
@@ -59,7 +63,7 @@ public class UserController extends UI {
     private static final String[] fieldNames = new String[]{ID, NAME,
             AGE, IS_ADMIN, CREATED_DATE};
 
-    private static UserDao userDao = new UserDao();
+    private static UserDaoInterface userDao = new UserDao();
 
     private IndexedContainer userContainer = readDatasource();
 
@@ -190,7 +194,10 @@ public class UserController extends UI {
                 int id = Integer.parseInt(str[0]);
 
                 String name = str[1];
-                if (name.equals("")) name = "Unknown";
+                if (name.equals("")) {
+                    Notification.show("Warning!", "Enter name!", Notification.Type.WARNING_MESSAGE);
+                    return;
+                }
 
                 int age;
                 try {
@@ -216,14 +223,17 @@ public class UserController extends UI {
             public void buttonClick(Button.ClickEvent event) {
 
                 String name = windowNameField.getValue();
-                if (name.equals("")) name = "Unknown";
-                int age;
+                if (name.equals("")){
+                    Notification.show("Warning!", "Enter name!", Notification.Type.WARNING_MESSAGE);
+                    window.close();
+                    return;
+                }
 
+                int age;
                 try {
                     age = Integer.parseInt(windowAgeField.getValue());
                 } catch (NumberFormatException e) {
-                    Notification.show("Warning!", "Enter digits!",
-                            Notification.Type.WARNING_MESSAGE);
+                    Notification.show("Warning!", "Enter digits!", Notification.Type.WARNING_MESSAGE);
                     window.close();
                     return;
                 }
@@ -236,11 +246,10 @@ public class UserController extends UI {
                 user.setAdmin(isAdmin);
 
                 if (userDao.saveOrUpdateUser(user)) {
-                    Notification.show("New user added!",
-                            Notification.Type.TRAY_NOTIFICATION);
+                    Notification.show("New user added!", Notification.Type.TRAY_NOTIFICATION);
                 }
 
-                // Создаю строку для нового юзера и заполняюю ее данными
+                // Create a string for the new user , and populates it with data
                 Object newUserId = userContainer.addItem();
                 Item row = userContainer.getItem(newUserId);
 
@@ -250,6 +259,9 @@ public class UserController extends UI {
                 row.getItemProperty(AGE).setValue(String.valueOf(age));
                 row.getItemProperty(IS_ADMIN).setValue(String.valueOf(isAdmin));
                 row.getItemProperty(CREATED_DATE).setValue(String.valueOf(new Date(System.currentTimeMillis())));
+
+                userList.select(newUserId);
+                userList.setCurrentPageFirstItemId(newUserId);
 
                 // clearing fields
                 windowNameField.setValue("");
@@ -264,9 +276,9 @@ public class UserController extends UI {
             public void buttonClick(Button.ClickEvent event) {
                 Object userId = userList.getValue();
 
-                /* Из таблицы userList получаю item (содержит данные из строки)
-                 * С помощью split() получаю массив строк, где первый элемент
-                 * это id юзера, которого нужно удалить из БД
+                /* From Table userList get item ( includes data from the line)
+                 * Using split() gets an array of strings , where the first element
+                 * ID of the user you want to delete from the database
                  */
                 Item item = userList.getItem(userId);
 
@@ -275,8 +287,7 @@ public class UserController extends UI {
 
                 try {
                     userDao.deleteUser(userDao.getUser(id));
-                    Notification.show("Removed",
-                            Notification.Type.TRAY_NOTIFICATION);
+                    Notification.show("Removed", Notification.Type.TRAY_NOTIFICATION);
                 } catch (Exception e) {
                     Notification
                             .show("Remove failed: " + e.getCause().getMessage(),
@@ -338,6 +349,7 @@ public class UserController extends UI {
         userList.setVisibleColumns(new String[]{ID, NAME, AGE, IS_ADMIN, CREATED_DATE});
         userList.setSelectable(true);
         userList.setImmediate(true);
+        userList.setRowHeaderMode(Table.RowHeaderMode.INDEX);
 
         userList.addValueChangeListener(new Property.ValueChangeListener() {
             public void valueChange(Property.ValueChangeEvent event) {

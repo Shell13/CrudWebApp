@@ -81,4 +81,30 @@ public class User {
                 ", cratedDate=" + cratedDate +
                 '}';
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User)) return false;
+
+        User user = (User) o;
+
+        if (age != user.age) return false;
+        if (id != user.id) return false;
+        if (isAdmin != user.isAdmin) return false;
+        if (cratedDate != null ? !cratedDate.equals(user.cratedDate) : user.cratedDate != null) return false;
+        if (!name.equals(user.name)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id;
+        result = 31 * result + name.hashCode();
+        result = 31 * result + age;
+        result = 31 * result + (isAdmin ? 1 : 0);
+        result = 31 * result + (cratedDate != null ? cratedDate.hashCode() : 0);
+        return result;
+    }
 }
