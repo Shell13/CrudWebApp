@@ -2,6 +2,7 @@ package com.controller;
 
 import com.dao.UserDao;
 import com.dao.UserDaoInterface;
+import com.jensjansson.pagedtable.PagedTable;
 import com.model.User;
 import com.utils.FillingDB;
 import com.vaadin.annotations.Theme;
@@ -15,9 +16,9 @@ import com.vaadin.event.FieldEvents;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.*;
+import com.vaadin.ui.themes.ValoTheme;
 
 import javax.servlet.annotation.WebServlet;
-import java.sql.Date;
 import java.util.List;
 
 /**
@@ -37,7 +38,7 @@ public class UserController extends UI {
         FillingDB.fillDB(); //TODO
     }
 
-    private Table userList = new Table();
+    private PagedTable userList = new PagedTable();
     private TextField searchField = new TextField();
     private Window window = new Window("New User");
 
@@ -50,6 +51,7 @@ public class UserController extends UI {
     private Button saveOldUserButton = new Button("Save");
     private Button saveNewUserButton = new Button("Save");
     private Button cancelButton = new Button("Cancel");
+
 
     private FormLayout editorLayout = new FormLayout();
     private FieldGroup editorFields = new FieldGroup();
@@ -74,7 +76,9 @@ public class UserController extends UI {
         initEditor();
         initSearch();
         initAddRemoveSaveCancelButtons();
+        initPaging();
     }
+
 
     private void initLayout() {
 
@@ -86,6 +90,10 @@ public class UserController extends UI {
         splitPanel.addComponent(leftLayout);
         splitPanel.addComponent(editorLayout);
         leftLayout.addComponent(userList);
+//        leftLayout.addComponent(userList.createControls());
+        leftLayout.addComponent(initPaging());
+
+
 
         HorizontalLayout bottomLeftLayout = new HorizontalLayout();
         leftLayout.addComponent(bottomLeftLayout);
@@ -146,6 +154,81 @@ public class UserController extends UI {
 		 */
         editorFields.setBuffered(false);
     }
+
+    private HorizontalLayout initPaging(){
+        HorizontalLayout pagingRow = new HorizontalLayout();
+
+        final TextField pageCount = new TextField();
+        final TextField mock = new TextField();
+        mock.setWidth(330, UNITS_PIXELS);
+        mock.addStyleName(ValoTheme.TEXTFIELD_BORDERLESS);
+        mock.setReadOnly(true);
+        pageCount.setWidth(80.0f, UNITS_PIXELS);
+        pageCount.addStyleName(ValoTheme.TEXTFIELD_BORDERLESS);
+        pageCount.addStyleName(ValoTheme.TEXTFIELD_ALIGN_CENTER);
+        pageCount.setValue(userList.getCurrentPage() + " / " + userList.getTotalAmountOfPages());
+        pageCount.setReadOnly(true);
+
+
+        Button first = new Button("|«", new Button.ClickListener() {
+            @Override
+            public void buttonClick(Button.ClickEvent clickEvent) {
+                userList.setCurrentPage(0);
+                pageCount.setReadOnly(false);
+                pageCount.setValue(userList.getCurrentPage() + " / " + userList.getTotalAmountOfPages());
+                pageCount.setReadOnly(true);
+            }
+        });
+        first.addStyleName(ValoTheme.BUTTON_BORDERLESS_COLORED);
+
+        Button last = new Button("»|", new Button.ClickListener() {
+            @Override
+            public void buttonClick(Button.ClickEvent clickEvent) {
+                userList.setCurrentPage(userList.getTotalAmountOfPages());
+                pageCount.setReadOnly(false);
+                pageCount.setValue(userList.getCurrentPage() + " / " + userList.getTotalAmountOfPages());
+                pageCount.setReadOnly(true);
+            }
+        });
+        last.addStyleName(ValoTheme.BUTTON_BORDERLESS_COLORED);
+
+        Button previous = new Button("«", new Button.ClickListener() {
+            @Override
+            public void buttonClick(Button.ClickEvent clickEvent) {
+                userList.previousPage();
+                pageCount.setReadOnly(false);
+                pageCount.setValue(userList.getCurrentPage() + " / " + userList.getTotalAmountOfPages());
+                pageCount.setReadOnly(true);
+            }
+        });
+        previous.addStyleName(ValoTheme.BUTTON_BORDERLESS_COLORED);
+
+        Button next = new Button("»", new Button.ClickListener() {
+            @Override
+            public void buttonClick(Button.ClickEvent clickEvent) {
+                userList.nextPage();
+                pageCount.setReadOnly(false);
+                pageCount.setValue(userList.getCurrentPage() + " / " + userList.getTotalAmountOfPages());
+                pageCount.setReadOnly(true);
+            }
+        });
+        next.addStyleName(ValoTheme.BUTTON_BORDERLESS_COLORED);
+
+        pagingRow.addComponent(mock);
+        pagingRow.addComponent(first);
+        pagingRow.addComponent(previous);
+        pagingRow.addComponent(pageCount);
+        pagingRow.addComponent(next);
+        pagingRow.addComponent(last);
+//        pagingRow.setComponentAlignment(first, Alignment.MIDDLE_CENTER);
+//        pagingRow.setComponentAlignment(previous, Alignment.MIDDLE_CENTER);
+//        pagingRow.setComponentAlignment(pageCount, Alignment.MIDDLE_CENTER);
+//        pagingRow.setComponentAlignment(next, Alignment.MIDDLE_CENTER);
+//        pagingRow.setComponentAlignment(last, Alignment.MIDDLE_CENTER);
+
+        return pagingRow;
+    }
+
     @SuppressWarnings("unchecked")
     private void initAddRemoveSaveCancelButtons() {
 
@@ -190,7 +273,7 @@ public class UserController extends UI {
                 // little magic
                 Object userId = userList.getValue();
                 Item item = userList.getItem(userId);
-                String str[] = item.toString().split(" ");
+                String str[] = item.toString().trim().split(" ");
                 int id = Integer.parseInt(str[0]);
 
                 String name = str[1];
@@ -222,7 +305,7 @@ public class UserController extends UI {
         saveNewUserButton.addClickListener(new Button.ClickListener() {
             public void buttonClick(Button.ClickEvent event) {
 
-                String name = windowNameField.getValue();
+                String name = windowNameField.getValue().trim();
                 if (name.equals("")){
                     Notification.show("Warning!", "Enter name!", Notification.Type.WARNING_MESSAGE);
                     window.close();
@@ -248,26 +331,28 @@ public class UserController extends UI {
                 if (userDao.saveOrUpdateUser(user)) {
                     Notification.show("New user added!", Notification.Type.TRAY_NOTIFICATION);
                 }
+                User last = userDao.getLast();
+                int id = last.getId();
+                String date = String.valueOf(last.getCratedDate());
 
                 // Create a string for the new user , and populates it with data
                 Object newUserId = userContainer.addItem();
                 Item row = userContainer.getItem(newUserId);
 
-
-                row.getItemProperty(ID).setValue("00");
+                row.getItemProperty(ID).setValue(String.valueOf(id));
                 row.getItemProperty(NAME).setValue(name);
                 row.getItemProperty(AGE).setValue(String.valueOf(age));
                 row.getItemProperty(IS_ADMIN).setValue(String.valueOf(isAdmin));
-                row.getItemProperty(CREATED_DATE).setValue(String.valueOf(new Date(System.currentTimeMillis())));
+                row.getItemProperty(CREATED_DATE).setValue(date);
 
+
+                userList.setCurrentPage(userList.getTotalAmountOfPages());
                 userList.select(newUserId);
                 userList.setCurrentPageFirstItemId(newUserId);
 
+
                 // clearing fields
-                windowNameField.setValue("");
-                windowAgeField.setValue("");
-                windowCheckBox.setValue(false);
-                window.close();
+                cancelButton.click();
             }
         });
 
@@ -349,7 +434,9 @@ public class UserController extends UI {
         userList.setVisibleColumns(new String[]{ID, NAME, AGE, IS_ADMIN, CREATED_DATE});
         userList.setSelectable(true);
         userList.setImmediate(true);
-        userList.setRowHeaderMode(Table.RowHeaderMode.INDEX);
+//        userList.setRowHeaderMode(Table.RowHeaderMode.INDEX);//todo
+        userList.setPageLength(20);
+
 
         userList.addValueChangeListener(new Property.ValueChangeListener() {
             public void valueChange(Property.ValueChangeEvent event) {

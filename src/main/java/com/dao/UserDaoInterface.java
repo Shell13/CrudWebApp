@@ -11,5 +11,6 @@ public interface UserDaoInterface {
     boolean saveOrUpdateUser(User user);
     boolean deleteUser(User user);
     User getUser(int Id);
+    User getLast();
     List getAllUsers();
 }

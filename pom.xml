@@ -24,6 +24,7 @@
             </snapshots>
         </repository>
     </repositories>
+
     <pluginRepositories>
         <pluginRepository>
             <id>vaadin-snapshots</id>
@@ -132,6 +133,13 @@
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-sass-compiler</artifactId>
             <version>0.9.10</version>
+        </dependency>
+
+        <!--PagingTable-->
+        <dependency>
+            <groupId>org.vaadin.addons</groupId>
+            <artifactId>pagedtable</artifactId>
+            <version>0.6.5</version>
         </dependency>
 
     </dependencies>

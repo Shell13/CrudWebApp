@@ -2,6 +2,7 @@ package com.dao;
 
 import com.logger.LoggerWrapper;
 import com.model.User;
+import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -64,6 +65,26 @@ public class UserDao implements UserDaoInterface {
             LOG.info("getUser");
             user = (User) session.get(User.class, id);
             tx.commit();
+        } catch (Exception e) {
+            if (tx != null) tx.rollback();
+            e.printStackTrace();
+        }
+        return user;
+    }
+    @Override
+    public User getLast(){
+        Session session = sessionFactory.getCurrentSession();
+        Transaction tx = null;
+        List list = new ArrayList<>();
+        User user = null;
+        try {
+            tx = session.beginTransaction();
+            LOG.info("getLast");
+            SQLQuery sql = session.createSQLQuery("SELECT * FROM user");
+            sql.addEntity(User.class);
+            list = sql.list();
+            tx.commit();
+            user = (User) list.get(list.size()-1);
         } catch (Exception e) {
             if (tx != null) tx.rollback();
             e.printStackTrace();
