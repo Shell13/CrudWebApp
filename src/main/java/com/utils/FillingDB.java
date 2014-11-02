@@ -26,8 +26,9 @@ public class FillingDB {
         return user;
     }
 
-    public static void fillDB() {
-        for (int i = 0; i < 10; i++) {
+    // fill 2 pages at page length - 24
+    public static void fillDB() {  //todo
+        for (int i = 0; i < 48; i++) {
             userDao.saveOrUpdateUser(generateUser());
         }
     }

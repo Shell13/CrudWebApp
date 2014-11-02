@@ -67,7 +67,7 @@ public class UserController extends UI {
 
     private static UserDaoInterface userDao = new UserDao();
 
-    private IndexedContainer userContainer = readDatasource();
+    private IndexedContainer userContainer = readDataSource();
 
     @Override
     protected void init(VaadinRequest request) {
@@ -76,9 +76,7 @@ public class UserController extends UI {
         initEditor();
         initSearch();
         initAddRemoveSaveCancelButtons();
-        initPaging();
     }
-
 
     private void initLayout() {
 
@@ -90,15 +88,19 @@ public class UserController extends UI {
         splitPanel.addComponent(leftLayout);
         splitPanel.addComponent(editorLayout);
         leftLayout.addComponent(userList);
-//        leftLayout.addComponent(userList.createControls());
-        leftLayout.addComponent(initPaging());
 
 
+        Component paging = initPaging();
+        leftLayout.addComponent(paging);
 
         HorizontalLayout bottomLeftLayout = new HorizontalLayout();
         leftLayout.addComponent(bottomLeftLayout);
         bottomLeftLayout.addComponent(searchField);
         bottomLeftLayout.addComponent(addNewUserButton);
+
+        leftLayout.setComponentAlignment(userList, Alignment.TOP_CENTER);
+        leftLayout.setComponentAlignment(paging, Alignment.BOTTOM_CENTER);
+        leftLayout.setComponentAlignment(bottomLeftLayout, Alignment.BOTTOM_CENTER);
 
 		/* Set the contents in the left of the split panel to use all the space */
         leftLayout.setSizeFull();
@@ -107,8 +109,9 @@ public class UserController extends UI {
          * On the left side, expand the size of the userList so that it uses
 		 * all the space left after from bottomLeftLayout
 		 */
-        leftLayout.setExpandRatio(userList, 1);
-        userList.setSizeFull();
+        leftLayout.setExpandRatio(userList, 0.88f);
+        leftLayout.setExpandRatio(paging, 0.06f);
+        leftLayout.setExpandRatio(bottomLeftLayout, 0.04f);
 
 		/*
          * In the bottomLeftLayout, searchField takes all the width there is
@@ -155,18 +158,30 @@ public class UserController extends UI {
         editorFields.setBuffered(false);
     }
 
+    private int getTotalAmountOfPages() {
+        int size = userContainer.size();
+        int pageLength = userList.getPageLength();
+        int pageCount;
+        if (size % pageLength == 0) {
+            pageCount = size / pageLength;
+        }
+        else pageCount = size / pageLength + 1;
+
+        return pageCount;
+    }
+
     private HorizontalLayout initPaging(){
+        /*
+         * Something taken from com.jensjansson.pagedtable.PagedTable from https://vaadin.com/directory#addon/pagedtable
+         */
         HorizontalLayout pagingRow = new HorizontalLayout();
 
         final TextField pageCount = new TextField();
-        final TextField mock = new TextField();
-        mock.setWidth(330, UNITS_PIXELS);
-        mock.addStyleName(ValoTheme.TEXTFIELD_BORDERLESS);
-        mock.setReadOnly(true);
-        pageCount.setWidth(80.0f, UNITS_PIXELS);
-        pageCount.addStyleName(ValoTheme.TEXTFIELD_BORDERLESS);
+        pageCount.setWidth(100.0f, UNITS_PIXELS);
         pageCount.addStyleName(ValoTheme.TEXTFIELD_ALIGN_CENTER);
-        pageCount.setValue(userList.getCurrentPage() + " / " + userList.getTotalAmountOfPages());
+        pageCount.addStyleName(ValoTheme.TEXTFIELD_BORDERLESS);
+
+        pageCount.setValue(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
         pageCount.setReadOnly(true);
 
 
@@ -175,7 +190,7 @@ public class UserController extends UI {
             public void buttonClick(Button.ClickEvent clickEvent) {
                 userList.setCurrentPage(0);
                 pageCount.setReadOnly(false);
-                pageCount.setValue(userList.getCurrentPage() + " / " + userList.getTotalAmountOfPages());
+                pageCount.setValue(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
                 pageCount.setReadOnly(true);
             }
         });
@@ -184,9 +199,9 @@ public class UserController extends UI {
         Button last = new Button("»|", new Button.ClickListener() {
             @Override
             public void buttonClick(Button.ClickEvent clickEvent) {
-                userList.setCurrentPage(userList.getTotalAmountOfPages());
+                userList.setCurrentPage(getTotalAmountOfPages());
                 pageCount.setReadOnly(false);
-                pageCount.setValue(userList.getCurrentPage() + " / " + userList.getTotalAmountOfPages());
+                pageCount.setValue(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
                 pageCount.setReadOnly(true);
             }
         });
@@ -197,7 +212,7 @@ public class UserController extends UI {
             public void buttonClick(Button.ClickEvent clickEvent) {
                 userList.previousPage();
                 pageCount.setReadOnly(false);
-                pageCount.setValue(userList.getCurrentPage() + " / " + userList.getTotalAmountOfPages());
+                pageCount.setValue(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
                 pageCount.setReadOnly(true);
             }
         });
@@ -208,23 +223,28 @@ public class UserController extends UI {
             public void buttonClick(Button.ClickEvent clickEvent) {
                 userList.nextPage();
                 pageCount.setReadOnly(false);
-                pageCount.setValue(userList.getCurrentPage() + " / " + userList.getTotalAmountOfPages());
+                pageCount.setValue(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
                 pageCount.setReadOnly(true);
             }
         });
         next.addStyleName(ValoTheme.BUTTON_BORDERLESS_COLORED);
 
-        pagingRow.addComponent(mock);
         pagingRow.addComponent(first);
         pagingRow.addComponent(previous);
         pagingRow.addComponent(pageCount);
         pagingRow.addComponent(next);
         pagingRow.addComponent(last);
-//        pagingRow.setComponentAlignment(first, Alignment.MIDDLE_CENTER);
-//        pagingRow.setComponentAlignment(previous, Alignment.MIDDLE_CENTER);
-//        pagingRow.setComponentAlignment(pageCount, Alignment.MIDDLE_CENTER);
-//        pagingRow.setComponentAlignment(next, Alignment.MIDDLE_CENTER);
-//        pagingRow.setComponentAlignment(last, Alignment.MIDDLE_CENTER);
+        pagingRow.setComponentAlignment(pageCount, Alignment.MIDDLE_CENTER);
+
+        userList.addListener(new PagedTable.PageChangeListener() {
+            @Override
+            public void pageChanged(PagedTable.PagedTableChangeEvent pagedTableChangeEvent) {
+
+                pageCount.setReadOnly(false);
+                pageCount.setValue(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
+                pageCount.setReadOnly(true);
+            }
+        });
 
         return pagingRow;
     }
@@ -345,17 +365,14 @@ public class UserController extends UI {
                 row.getItemProperty(IS_ADMIN).setValue(String.valueOf(isAdmin));
                 row.getItemProperty(CREATED_DATE).setValue(date);
 
-
-                userList.setCurrentPage(userList.getTotalAmountOfPages());
+                userList.setCurrentPage(getTotalAmountOfPages());
                 userList.select(newUserId);
                 userList.setCurrentPageFirstItemId(newUserId);
 
-
-                // clearing fields
+                // cleaning fields and close window
                 cancelButton.click();
             }
         });
-
 
         removeUserButton.addClickListener(new Button.ClickListener() {
             public void buttonClick(Button.ClickEvent event) {
@@ -391,7 +408,6 @@ public class UserController extends UI {
                 window.close();
             }
         });
-
     }
 
     private void initSearch() {
@@ -433,10 +449,11 @@ public class UserController extends UI {
         userList.setContainerDataSource(userContainer);
         userList.setVisibleColumns(new String[]{ID, NAME, AGE, IS_ADMIN, CREATED_DATE});
         userList.setSelectable(true);
+        userList.setWidth("100%");
         userList.setImmediate(true);
-//        userList.setRowHeaderMode(Table.RowHeaderMode.INDEX);//todo
-        userList.setPageLength(20);
-
+        userList.setRowHeaderMode(Table.RowHeaderMode.INDEX);
+        userList.setPageLength(24);                             // Page Length
+        userList.addStyleName(ValoTheme.TABLE_COMPACT);
 
         userList.addValueChangeListener(new Property.ValueChangeListener() {
             public void valueChange(Property.ValueChangeEvent event) {
@@ -477,7 +494,7 @@ public class UserController extends UI {
     }
 
     @SuppressWarnings("unchecked")
-    private static IndexedContainer readDatasource() {
+    private static IndexedContainer readDataSource() {
         IndexedContainer ic = new IndexedContainer();
 
         for (String p : fieldNames) {
