@@ -19,6 +19,7 @@ import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
 
 import javax.servlet.annotation.WebServlet;
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -26,11 +27,13 @@ import java.util.List;
  */
 
 @Theme("mytheme")
-public class UserController extends UI {
+public class UserController extends UI implements Serializable{
+    private static final long serialVersionUID = 6881455780158545828L;
 
     @WebServlet(value = "/*", asyncSupported = true)
     @VaadinServletConfiguration(productionMode = false, ui = UserController.class)
-    public static class Servlet extends VaadinServlet {
+    public static class Servlet extends VaadinServlet implements Serializable{
+        private static final long serialVersionUID = -355511520489623992L;
     }
 
     static {
@@ -72,7 +75,7 @@ public class UserController extends UI {
     @Override
     protected void init(VaadinRequest request) {
         initLayout();
-        initContactList();
+        initUserList();
         initEditor();
         initSearch();
         initAddRemoveSaveCancelButtons();
@@ -97,6 +100,8 @@ public class UserController extends UI {
         leftLayout.addComponent(bottomLeftLayout);
         bottomLeftLayout.addComponent(searchField);
         bottomLeftLayout.addComponent(addNewUserButton);
+        searchField.addStyleName(ValoTheme.TEXTFIELD_SMALL);
+        addNewUserButton.addStyleName(ValoTheme.BUTTON_SMALL);
 
         leftLayout.setComponentAlignment(userList, Alignment.TOP_CENTER);
         leftLayout.setComponentAlignment(paging, Alignment.BOTTOM_CENTER);
@@ -180,12 +185,14 @@ public class UserController extends UI {
         pageCount.setWidth(100.0f, UNITS_PIXELS);
         pageCount.addStyleName(ValoTheme.TEXTFIELD_ALIGN_CENTER);
         pageCount.addStyleName(ValoTheme.TEXTFIELD_BORDERLESS);
+        pageCount.addStyleName(ValoTheme.TEXTFIELD_SMALL);
 
         pageCount.setValue(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
         pageCount.setReadOnly(true);
 
 
         Button first = new Button("|«", new Button.ClickListener() {
+            private static final long serialVersionUID = -354520120489623992L;
             @Override
             public void buttonClick(Button.ClickEvent clickEvent) {
                 userList.setCurrentPage(0);
@@ -195,8 +202,10 @@ public class UserController extends UI {
             }
         });
         first.addStyleName(ValoTheme.BUTTON_BORDERLESS_COLORED);
+        first.addStyleName(ValoTheme.BUTTON_SMALL);
 
         Button last = new Button("»|", new Button.ClickListener() {
+            private static final long serialVersionUID = -355520120489623902L;
             @Override
             public void buttonClick(Button.ClickEvent clickEvent) {
                 userList.setCurrentPage(getTotalAmountOfPages());
@@ -206,8 +215,10 @@ public class UserController extends UI {
             }
         });
         last.addStyleName(ValoTheme.BUTTON_BORDERLESS_COLORED);
+        last.addStyleName(ValoTheme.BUTTON_SMALL);
 
         Button previous = new Button("«", new Button.ClickListener() {
+            private static final long serialVersionUID = -355530120489623992L;
             @Override
             public void buttonClick(Button.ClickEvent clickEvent) {
                 userList.previousPage();
@@ -217,8 +228,10 @@ public class UserController extends UI {
             }
         });
         previous.addStyleName(ValoTheme.BUTTON_BORDERLESS_COLORED);
+        previous.addStyleName(ValoTheme.BUTTON_SMALL);
 
         Button next = new Button("»", new Button.ClickListener() {
+            private static final long serialVersionUID = -355520120489653992L;
             @Override
             public void buttonClick(Button.ClickEvent clickEvent) {
                 userList.nextPage();
@@ -228,6 +241,7 @@ public class UserController extends UI {
             }
         });
         next.addStyleName(ValoTheme.BUTTON_BORDERLESS_COLORED);
+        next.addStyleName(ValoTheme.BUTTON_SMALL);
 
         pagingRow.addComponent(first);
         pagingRow.addComponent(previous);
@@ -237,6 +251,7 @@ public class UserController extends UI {
         pagingRow.setComponentAlignment(pageCount, Alignment.MIDDLE_CENTER);
 
         userList.addListener(new PagedTable.PageChangeListener() {
+            private static final long serialVersionUID = -355520124489623992L;
             @Override
             public void pageChanged(PagedTable.PagedTableChangeEvent pagedTableChangeEvent) {
 
@@ -287,6 +302,7 @@ public class UserController extends UI {
         });
 
         saveOldUserButton.addClickListener(new Button.ClickListener() {
+            private static final long serialVersionUID = -355524220489623992L;
             @Override
             public void buttonClick(Button.ClickEvent event) {
 
@@ -323,6 +339,7 @@ public class UserController extends UI {
         });
 
         saveNewUserButton.addClickListener(new Button.ClickListener() {
+            private static final long serialVersionUID = -355520120489623492L;
             public void buttonClick(Button.ClickEvent event) {
 
                 String name = windowNameField.getValue().trim();
@@ -365,7 +382,7 @@ public class UserController extends UI {
                 row.getItemProperty(IS_ADMIN).setValue(String.valueOf(isAdmin));
                 row.getItemProperty(CREATED_DATE).setValue(date);
 
-                userList.setCurrentPage(getTotalAmountOfPages());
+//                userList.setCurrentPage(getTotalAmountOfPages());
                 userList.select(newUserId);
                 userList.setCurrentPageFirstItemId(newUserId);
 
@@ -375,6 +392,7 @@ public class UserController extends UI {
         });
 
         removeUserButton.addClickListener(new Button.ClickListener() {
+            private static final long serialVersionUID = -357520120489623992L;
             public void buttonClick(Button.ClickEvent event) {
                 Object userId = userList.getValue();
 
@@ -400,6 +418,7 @@ public class UserController extends UI {
         });
 
         cancelButton.addClickListener(new Button.ClickListener() {
+            private static final long serialVersionUID = -355520120489623952L;
             @Override
             public void buttonClick(Button.ClickEvent event) {
                 windowNameField.setValue("");
@@ -410,24 +429,39 @@ public class UserController extends UI {
         });
     }
 
+    private void initUserList() {
+        userList.setContainerDataSource(userContainer);
+        userList.setVisibleColumns(new String[]{ID, NAME, AGE, IS_ADMIN, CREATED_DATE});
+        userList.setSelectable(true);
+        userList.setWidth("100%");
+        userList.setImmediate(true);
+        userList.setRowHeaderMode(Table.RowHeaderMode.INDEX);
+        userList.setPageLength(24);                             // Page Length
+        userList.addStyleName(ValoTheme.TABLE_COMPACT);
+
+        userList.addValueChangeListener(new Property.ValueChangeListener() {
+            private static final long serialVersionUID = -355520120489183992L;
+            public void valueChange(Property.ValueChangeEvent event) {
+
+                Object userId = userList.getValue();
+
+				/*
+				 * When a user is selected from the list, we want to show
+				 * that in our editor on the right. This is nicely done by the
+				 * FieldGroup that binds all the fields to the corresponding
+				 * Properties in our user at once.
+				 */
+                if (userId != null) {
+                    editorFields.setItemDataSource(userList.getItem(userId));
+                }
+                editorLayout.setVisible(userId != null);
+            }
+        });
+    }
+
     private void initSearch() {
 
-		/*
-		 * We want to show a subtle prompt in the search field. We could also
-		 * set a caption that would be shown above the field or description to
-		 * be shown in a tooltip.
-		 */
-        searchField.setInputPrompt("Search users");
-
-		/*
-		 * Granularity for sending events over the wire can be controlled. By
-		 * default simple changes like writing a text in TextField are sent to
-		 * server with the next Ajax call. You can set your component to be
-		 * immediate to send the changes to server immediately after focus
-		 * leaves the field. Here we choose to send the text over the wire as
-		 * soon as user stops writing for a moment.
-		 */
-        searchField.setTextChangeEventMode(AbstractTextField.TextChangeEventMode.LAZY);
+		searchField.setInputPrompt("Search users");
 
 		/*
 		 * When the event happens, we handle it in the anonymous inner class.
@@ -440,51 +474,25 @@ public class UserController extends UI {
 
 				/* Reset the filter for the userContainer. */
                 userContainer.removeAllContainerFilters();
-                userContainer.addContainerFilter(new ContactFilter(event.getText()));
+                userContainer.addContainerFilter(new UserFilter(event.getText()));
+                userList.refreshRowCache();
             }
         });
     }
 
-    private void initContactList() {
-        userList.setContainerDataSource(userContainer);
-        userList.setVisibleColumns(new String[]{ID, NAME, AGE, IS_ADMIN, CREATED_DATE});
-        userList.setSelectable(true);
-        userList.setWidth("100%");
-        userList.setImmediate(true);
-        userList.setRowHeaderMode(Table.RowHeaderMode.INDEX);
-        userList.setPageLength(24);                             // Page Length
-        userList.addStyleName(ValoTheme.TABLE_COMPACT);
-
-        userList.addValueChangeListener(new Property.ValueChangeListener() {
-            public void valueChange(Property.ValueChangeEvent event) {
-
-                Object userId = userList.getValue();
-
-				/*
-				 * When a contact is selected from the list, we want to show
-				 * that in our editor on the right. This is nicely done by the
-				 * FieldGroup that binds all the fields to the corresponding
-				 * Properties in our contact at once.
-				 */
-                if (userId != null) {
-                    editorFields.setItemDataSource(userList.getItem(userId));
-                }
-                editorLayout.setVisible(userId != null);
-            }
-        });
-    }
-
-    private class ContactFilter implements Container.Filter {
+    private class UserFilter implements Container.Filter {
         private String needle;
 
-        public ContactFilter(String needle) {
+        public UserFilter(String needle) {
             this.needle = needle.toLowerCase();
         }
 
         public boolean passesFilter(Object itemId, Item item) {
             String haystack = ("" + item.getItemProperty(ID).getValue()
                     + item.getItemProperty(NAME).getValue()
-                    + item.getItemProperty(AGE).getValue()).toLowerCase();
+                    + item.getItemProperty(AGE).getValue()).toLowerCase()
+                    + item.getItemProperty(IS_ADMIN).getValue()
+                    + item.getItemProperty(CREATED_DATE).getValue();
             return haystack.contains(needle);
         }
 
