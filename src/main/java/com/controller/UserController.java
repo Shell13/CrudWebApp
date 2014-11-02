@@ -1,7 +1,7 @@
 package com.controller;
 
 import com.dao.UserDao;
-import com.dao.UserDaoInterface;
+import com.dao.UserDaoImpl;
 import com.jensjansson.pagedtable.PagedTable;
 import com.model.User;
 import com.utils.FillingDB;
@@ -13,27 +13,22 @@ import com.vaadin.data.Property;
 import com.vaadin.data.fieldgroup.FieldGroup;
 import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.event.FieldEvents;
+import com.vaadin.server.Sizeable;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
 
 import javax.servlet.annotation.WebServlet;
-import java.io.Serializable;
 import java.util.List;
 
-/**
- * Created by Roman on 21.10.2014.
- */
-
 @Theme("mytheme")
-public class UserController extends UI implements Serializable{
-    private static final long serialVersionUID = 6881455780158545828L;
+@SuppressWarnings("serial")
+public class UserController extends UI {
 
     @WebServlet(value = "/*", asyncSupported = true)
     @VaadinServletConfiguration(productionMode = false, ui = UserController.class)
-    public static class Servlet extends VaadinServlet implements Serializable{
-        private static final long serialVersionUID = -355511520489623992L;
+    public static class Servlet extends VaadinServlet {
     }
 
     static {
@@ -68,7 +63,7 @@ public class UserController extends UI implements Serializable{
     private static final String[] fieldNames = new String[]{ID, NAME,
             AGE, IS_ADMIN, CREATED_DATE};
 
-    private static UserDaoInterface userDao = new UserDao();
+    private static UserDao userDao = new UserDaoImpl();
 
     private IndexedContainer userContainer = readDataSource();
 
@@ -182,62 +177,69 @@ public class UserController extends UI implements Serializable{
         HorizontalLayout pagingRow = new HorizontalLayout();
 
         final TextField pageCount = new TextField();
-        pageCount.setWidth(100.0f, UNITS_PIXELS);
+        pageCount.setWidth(100.0f, Sizeable.Unit.PIXELS);
         pageCount.addStyleName(ValoTheme.TEXTFIELD_ALIGN_CENTER);
         pageCount.addStyleName(ValoTheme.TEXTFIELD_BORDERLESS);
         pageCount.addStyleName(ValoTheme.TEXTFIELD_SMALL);
 
-        pageCount.setValue(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
-        pageCount.setReadOnly(true);
+        pageCount.setInputPrompt(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
 
+        pageCount.addValueChangeListener(new Property.ValueChangeListener() {
+            public void valueChange(com.vaadin.data.Property.ValueChangeEvent event) {
+                if (pageCount.isValid() && pageCount.getValue() != null) {
+                    String page = pageCount.getValue();
+                    int pageNumber;
+                    try {
+                        pageNumber = Integer.valueOf(page);
+                    } catch (NumberFormatException e) {
+                        if (!page.equals(""))
+                        Notification.show("Warning!", "Enter digits!", Notification.Type.WARNING_MESSAGE);
+                        pageCount.setValue("");
+                        userList.focus();
+                        return;
+                    }
+                    userList.setCurrentPage(pageNumber);
+                    pageCount.setValue("");
+                    userList.focus();
+                }
+            }
+        });
 
         Button first = new Button("|«", new Button.ClickListener() {
-            private static final long serialVersionUID = -354520120489623992L;
             @Override
             public void buttonClick(Button.ClickEvent clickEvent) {
                 userList.setCurrentPage(0);
-                pageCount.setReadOnly(false);
-                pageCount.setValue(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
-                pageCount.setReadOnly(true);
+                pageCount.setInputPrompt(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
             }
         });
         first.addStyleName(ValoTheme.BUTTON_BORDERLESS_COLORED);
         first.addStyleName(ValoTheme.BUTTON_SMALL);
 
         Button last = new Button("»|", new Button.ClickListener() {
-            private static final long serialVersionUID = -355520120489623902L;
             @Override
             public void buttonClick(Button.ClickEvent clickEvent) {
                 userList.setCurrentPage(getTotalAmountOfPages());
-                pageCount.setReadOnly(false);
-                pageCount.setValue(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
-                pageCount.setReadOnly(true);
+                pageCount.setInputPrompt(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
             }
         });
         last.addStyleName(ValoTheme.BUTTON_BORDERLESS_COLORED);
         last.addStyleName(ValoTheme.BUTTON_SMALL);
 
         Button previous = new Button("«", new Button.ClickListener() {
-            private static final long serialVersionUID = -355530120489623992L;
             @Override
             public void buttonClick(Button.ClickEvent clickEvent) {
                 userList.previousPage();
-                pageCount.setReadOnly(false);
-                pageCount.setValue(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
-                pageCount.setReadOnly(true);
+                pageCount.setInputPrompt(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
             }
         });
         previous.addStyleName(ValoTheme.BUTTON_BORDERLESS_COLORED);
         previous.addStyleName(ValoTheme.BUTTON_SMALL);
 
         Button next = new Button("»", new Button.ClickListener() {
-            private static final long serialVersionUID = -355520120489653992L;
             @Override
             public void buttonClick(Button.ClickEvent clickEvent) {
                 userList.nextPage();
-                pageCount.setReadOnly(false);
-                pageCount.setValue(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
-                pageCount.setReadOnly(true);
+                pageCount.setInputPrompt(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
             }
         });
         next.addStyleName(ValoTheme.BUTTON_BORDERLESS_COLORED);
@@ -248,16 +250,14 @@ public class UserController extends UI implements Serializable{
         pagingRow.addComponent(pageCount);
         pagingRow.addComponent(next);
         pagingRow.addComponent(last);
+
         pagingRow.setComponentAlignment(pageCount, Alignment.MIDDLE_CENTER);
 
         userList.addListener(new PagedTable.PageChangeListener() {
-            private static final long serialVersionUID = -355520124489623992L;
             @Override
             public void pageChanged(PagedTable.PagedTableChangeEvent pagedTableChangeEvent) {
 
-                pageCount.setReadOnly(false);
-                pageCount.setValue(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
-                pageCount.setReadOnly(true);
+                pageCount.setInputPrompt(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
             }
         });
 
@@ -302,7 +302,6 @@ public class UserController extends UI implements Serializable{
         });
 
         saveOldUserButton.addClickListener(new Button.ClickListener() {
-            private static final long serialVersionUID = -355524220489623992L;
             @Override
             public void buttonClick(Button.ClickEvent event) {
 
@@ -339,7 +338,6 @@ public class UserController extends UI implements Serializable{
         });
 
         saveNewUserButton.addClickListener(new Button.ClickListener() {
-            private static final long serialVersionUID = -355520120489623492L;
             public void buttonClick(Button.ClickEvent event) {
 
                 String name = windowNameField.getValue().trim();
@@ -382,7 +380,7 @@ public class UserController extends UI implements Serializable{
                 row.getItemProperty(IS_ADMIN).setValue(String.valueOf(isAdmin));
                 row.getItemProperty(CREATED_DATE).setValue(date);
 
-//                userList.setCurrentPage(getTotalAmountOfPages());
+                userList.setCurrentPage(getTotalAmountOfPages());
                 userList.select(newUserId);
                 userList.setCurrentPageFirstItemId(newUserId);
 
@@ -392,7 +390,6 @@ public class UserController extends UI implements Serializable{
         });
 
         removeUserButton.addClickListener(new Button.ClickListener() {
-            private static final long serialVersionUID = -357520120489623992L;
             public void buttonClick(Button.ClickEvent event) {
                 Object userId = userList.getValue();
 
@@ -418,7 +415,6 @@ public class UserController extends UI implements Serializable{
         });
 
         cancelButton.addClickListener(new Button.ClickListener() {
-            private static final long serialVersionUID = -355520120489623952L;
             @Override
             public void buttonClick(Button.ClickEvent event) {
                 windowNameField.setValue("");
@@ -431,7 +427,7 @@ public class UserController extends UI implements Serializable{
 
     private void initUserList() {
         userList.setContainerDataSource(userContainer);
-        userList.setVisibleColumns(new String[]{ID, NAME, AGE, IS_ADMIN, CREATED_DATE});
+        userList.setVisibleColumns(fieldNames);
         userList.setSelectable(true);
         userList.setWidth("100%");
         userList.setImmediate(true);
@@ -440,7 +436,6 @@ public class UserController extends UI implements Serializable{
         userList.addStyleName(ValoTheme.TABLE_COMPACT);
 
         userList.addValueChangeListener(new Property.ValueChangeListener() {
-            private static final long serialVersionUID = -355520120489183992L;
             public void valueChange(Property.ValueChangeEvent event) {
 
                 Object userId = userList.getValue();
@@ -476,6 +471,7 @@ public class UserController extends UI implements Serializable{
                 userContainer.removeAllContainerFilters();
                 userContainer.addContainerFilter(new UserFilter(event.getText()));
                 userList.refreshRowCache();
+                userList.setCurrentPage(0);
             }
         });
     }

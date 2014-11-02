@@ -1,16 +1,13 @@
 package com.utils;
 
-import com.dao.UserDao;
+import com.dao.UserDaoImpl;
 import com.model.User;
 
 import java.util.Random;
 
-/**
- * Created by Roman on 28.10.2014.
- */
 // Наполнение БД списком юзеров
 public class FillingDB {
-    private static UserDao userDao = new UserDao();
+    private static UserDaoImpl userDaoImpl = new UserDaoImpl();
 
     private static String[] names = {"Leonard", "Alice", "Sheldon", "Mike", "Olivia",
             "Nina", "Alex", "Rita", "Fry", "Umberto", "Lila", "Bender",
@@ -29,7 +26,7 @@ public class FillingDB {
     // fill 2 pages at page length - 24
     public static void fillDB() {  //todo
         for (int i = 0; i < 48; i++) {
-            userDao.saveOrUpdateUser(generateUser());
+            userDaoImpl.saveOrUpdateUser(generateUser());
         }
     }
 }
