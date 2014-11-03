@@ -22,8 +22,6 @@ public class UserDaoImpl implements UserDao {
 
     private  SessionFactory sessionFactory = createSessionFactory();
 
-    private Session session = sessionFactory.getCurrentSession();
-
     // for Hibernate 4.3
     public  SessionFactory createSessionFactory() {
         Configuration configuration = new Configuration();
