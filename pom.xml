@@ -39,6 +39,7 @@
     </pluginRepositories>
 
     <properties>
+        <java.version>1.7</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <vaadin.version>7.3.3</vaadin.version>
         <vaadin.plugin.version>${vaadin.version}</vaadin.plugin.version>
@@ -135,12 +136,39 @@
             <version>0.9.10</version>
         </dependency>
 
+        <!--SpringVaadinIntegration-->
+            <dependency>
+                <groupId>ru.xpoft.vaadin</groupId>
+                <artifactId>spring-vaadin-integration</artifactId>
+                <version>3.1</version>
+            </dependency>
+
         <!--PagingTable-->
         <dependency>
             <groupId>org.vaadin.addons</groupId>
             <artifactId>pagedtable</artifactId>
             <version>0.6.5</version>
         </dependency>
+
+        <!--Spring-->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>4.1.1.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>4.1.1.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+            <version>4.1.1.RELEASE</version>
+        </dependency>
+
+
+
 
     </dependencies>
 

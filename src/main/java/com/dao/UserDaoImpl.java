@@ -9,18 +9,23 @@ import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
+import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.List;
 
+
+@Repository
 public class UserDaoImpl implements UserDao {
 
     private static final LoggerWrapper LOG = LoggerWrapper.get(UserDaoImpl.class);
 
-    private static SessionFactory sessionFactory = createSessionFactory();
+    private  SessionFactory sessionFactory = createSessionFactory();
+
+    private Session session = sessionFactory.getCurrentSession();
 
     // for Hibernate 4.3
-    public static SessionFactory createSessionFactory() {
+    public  SessionFactory createSessionFactory() {
         Configuration configuration = new Configuration();
         configuration.configure();
         StandardServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder().applySettings(configuration.getProperties()).build();

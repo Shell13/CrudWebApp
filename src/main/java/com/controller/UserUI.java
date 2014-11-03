@@ -1,12 +1,10 @@
 package com.controller;
 
-import com.dao.UserDao;
-import com.dao.UserDaoImpl;
 import com.jensjansson.pagedtable.PagedTable;
 import com.model.User;
+import com.service.UserService;
 import com.utils.FillingDB;
 import com.vaadin.annotations.Theme;
-import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.data.Container;
 import com.vaadin.data.Item;
 import com.vaadin.data.Property;
@@ -15,33 +13,31 @@ import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.event.FieldEvents;
 import com.vaadin.server.Sizeable;
 import com.vaadin.server.VaadinRequest;
-import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
 
-import javax.servlet.annotation.WebServlet;
 import java.util.List;
 
 @Theme("mytheme")
 @SuppressWarnings("serial")
-public class UserController extends UI {
+@org.springframework.stereotype.Component
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+public class UserUI extends UI {
 
-    @WebServlet(value = "/*", asyncSupported = true)
-    @VaadinServletConfiguration(productionMode = false, ui = UserController.class)
-    public static class Servlet extends VaadinServlet {
-    }
-
-    static {
-        //filling the test database
-        FillingDB.fillDB(); //TODO
-    }
+    @Autowired
+    private UserService userService;
 
     private PagedTable userList = new PagedTable();
-    private TextField searchField = new TextField();
+
     private Window window = new Window("New User");
 
     private TextField windowNameField = new TextField("Name");
     private TextField windowAgeField = new TextField("Age");
+    private TextField searchField = new TextField();
+
     private CheckBox windowCheckBox = new CheckBox("Admin", false);
 
     private Button addNewUserButton = new Button("New");
@@ -49,7 +45,6 @@ public class UserController extends UI {
     private Button saveOldUserButton = new Button("Save");
     private Button saveNewUserButton = new Button("Save");
     private Button cancelButton = new Button("Cancel");
-
 
     private FormLayout editorLayout = new FormLayout();
     private FieldGroup editorFields = new FieldGroup();
@@ -63,12 +58,12 @@ public class UserController extends UI {
     private static final String[] fieldNames = new String[]{ID, NAME,
             AGE, IS_ADMIN, CREATED_DATE};
 
-    private static UserDao userDao = new UserDaoImpl();
-
-    private IndexedContainer userContainer = readDataSource();
+    private IndexedContainer userContainer;
 
     @Override
     protected void init(VaadinRequest request) {
+        FillingDB.fillDB(); //TODO
+        userContainer = readDataSource();
         initLayout();
         initUserList();
         initEditor();
@@ -88,7 +83,7 @@ public class UserController extends UI {
         leftLayout.addComponent(userList);
 
 
-        Component paging = initPaging();
+        HorizontalLayout paging = initPaging();
         leftLayout.addComponent(paging);
 
         HorizontalLayout bottomLeftLayout = new HorizontalLayout();
@@ -164,13 +159,12 @@ public class UserController extends UI {
         int pageCount;
         if (size % pageLength == 0) {
             pageCount = size / pageLength;
-        }
-        else pageCount = size / pageLength + 1;
+        } else pageCount = size / pageLength + 1;
 
         return pageCount;
     }
 
-    private HorizontalLayout initPaging(){
+    private HorizontalLayout initPaging() {
         /*
          * Something taken from com.jensjansson.pagedtable.PagedTable from https://vaadin.com/directory#addon/pagedtable
          */
@@ -193,7 +187,7 @@ public class UserController extends UI {
                         pageNumber = Integer.valueOf(page);
                     } catch (NumberFormatException e) {
                         if (!page.equals(""))
-                        Notification.show("Warning!", "Enter digits!", Notification.Type.WARNING_MESSAGE);
+                            Notification.show("Warning!", "Enter digits!", Notification.Type.WARNING_MESSAGE);
                         pageCount.setValue("");
                         userList.focus();
                         return;
@@ -209,7 +203,6 @@ public class UserController extends UI {
             @Override
             public void buttonClick(Button.ClickEvent clickEvent) {
                 userList.setCurrentPage(0);
-                pageCount.setInputPrompt(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
             }
         });
         first.addStyleName(ValoTheme.BUTTON_BORDERLESS_COLORED);
@@ -219,7 +212,6 @@ public class UserController extends UI {
             @Override
             public void buttonClick(Button.ClickEvent clickEvent) {
                 userList.setCurrentPage(getTotalAmountOfPages());
-                pageCount.setInputPrompt(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
             }
         });
         last.addStyleName(ValoTheme.BUTTON_BORDERLESS_COLORED);
@@ -229,7 +221,6 @@ public class UserController extends UI {
             @Override
             public void buttonClick(Button.ClickEvent clickEvent) {
                 userList.previousPage();
-                pageCount.setInputPrompt(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
             }
         });
         previous.addStyleName(ValoTheme.BUTTON_BORDERLESS_COLORED);
@@ -239,7 +230,6 @@ public class UserController extends UI {
             @Override
             public void buttonClick(Button.ClickEvent clickEvent) {
                 userList.nextPage();
-                pageCount.setInputPrompt(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
             }
         });
         next.addStyleName(ValoTheme.BUTTON_BORDERLESS_COLORED);
@@ -256,7 +246,6 @@ public class UserController extends UI {
         userList.addListener(new PagedTable.PageChangeListener() {
             @Override
             public void pageChanged(PagedTable.PagedTableChangeEvent pagedTableChangeEvent) {
-
                 pageCount.setInputPrompt(userList.getCurrentPage() + " / " + getTotalAmountOfPages());
             }
         });
@@ -327,11 +316,11 @@ public class UserController extends UI {
 
                 boolean isAdmin = Boolean.parseBoolean(str[3]);
 
-                User oldUser = userDao.getUser(id);
+                User oldUser = userService.getUser(id);
                 oldUser.setName(name);
                 oldUser.setAge(age);
                 oldUser.setAdmin(isAdmin);
-                userDao.saveOrUpdateUser(oldUser);
+                userService.save(oldUser);
 
                 Notification.show("User saved!", Notification.Type.TRAY_NOTIFICATION);
             }
@@ -341,7 +330,7 @@ public class UserController extends UI {
             public void buttonClick(Button.ClickEvent event) {
 
                 String name = windowNameField.getValue().trim();
-                if (name.equals("")){
+                if (name.equals("")) {
                     Notification.show("Warning!", "Enter name!", Notification.Type.WARNING_MESSAGE);
                     window.close();
                     return;
@@ -363,10 +352,10 @@ public class UserController extends UI {
                 user.setAge(age);
                 user.setAdmin(isAdmin);
 
-                if (userDao.saveOrUpdateUser(user)) {
+                if (userService.save(user)) {
                     Notification.show("New user added!", Notification.Type.TRAY_NOTIFICATION);
                 }
-                User last = userDao.getLast();
+                User last = userService.getLast();
                 int id = last.getId();
                 String date = String.valueOf(last.getCratedDate());
 
@@ -403,7 +392,7 @@ public class UserController extends UI {
                 int id = Integer.parseInt(str[0]);
 
                 try {
-                    userDao.deleteUser(userDao.getUser(id));
+                    userService.deleteUser(userService.getUser(id));
                     Notification.show("Removed", Notification.Type.TRAY_NOTIFICATION);
                 } catch (Exception e) {
                     Notification
@@ -441,7 +430,7 @@ public class UserController extends UI {
                 Object userId = userList.getValue();
 
 				/*
-				 * When a user is selected from the list, we want to show
+                 * When a user is selected from the list, we want to show
 				 * that in our editor on the right. This is nicely done by the
 				 * FieldGroup that binds all the fields to the corresponding
 				 * Properties in our user at once.
@@ -456,10 +445,10 @@ public class UserController extends UI {
 
     private void initSearch() {
 
-		searchField.setInputPrompt("Search users");
+        searchField.setInputPrompt("Search users");
 
 		/*
-		 * When the event happens, we handle it in the anonymous inner class.
+         * When the event happens, we handle it in the anonymous inner class.
 		 * You may choose to use separate controllers (in MVC) or presenters (in
 		 * MVP) instead. In the end, the preferred application architecture is
 		 * up to you.
@@ -498,14 +487,14 @@ public class UserController extends UI {
     }
 
     @SuppressWarnings("unchecked")
-    private static IndexedContainer readDataSource() {
+    private IndexedContainer readDataSource() {
         IndexedContainer ic = new IndexedContainer();
 
         for (String p : fieldNames) {
             ic.addContainerProperty(p, String.class, "");
         }
 
-        List<User> users = userDao.getAllUsers();
+        List<User> users = userService.getAll();
         for (User user : users) {
             Object id = ic.addItem();
             ic.getContainerProperty(id, ID).setValue(String.valueOf(user.getId()));
