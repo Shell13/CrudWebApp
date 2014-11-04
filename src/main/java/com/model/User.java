@@ -3,10 +3,6 @@ package com.model;
 import javax.persistence.*;
 import java.util.Date;
 
-
-/**
- * Created by Roman on 23.08.2014.
- */
 @Entity
 @Table(name = "user")
 public class User {
