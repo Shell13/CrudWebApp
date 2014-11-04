@@ -16,6 +16,8 @@
 
     <context:property-placeholder location="classpath:mysql.properties"/>
 
+    <context:component-scan base-package="com.view"/>
+
     <context:component-scan base-package="com.utils"/>
 
     <context:component-scan base-package="com.dao"/>

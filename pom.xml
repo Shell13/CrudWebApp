@@ -83,8 +83,6 @@
             <version>4.3.6.Final</version>
         </dependency>
 
-
-
         <!-- Logging with SLF4J & LogBack -->
         <dependency>
             <groupId>org.slf4j</groupId>
