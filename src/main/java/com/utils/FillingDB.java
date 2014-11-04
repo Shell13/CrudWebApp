@@ -1,20 +1,25 @@
 package com.utils;
 
-import com.dao.UserDaoImpl;
 import com.model.User;
+import com.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Random;
 
-// Наполнение БД списком юзеров
+@Component
 public class FillingDB {
-    private static UserDaoImpl userDaoImpl = new UserDaoImpl();
 
-    private static String[] names = {"Leonard", "Alice", "Sheldon", "Mike", "Olivia",
+    @Autowired
+    private UserService userService;
+
+    private String[] names = {"Leonard", "Alice", "Sheldon", "Mike", "Olivia",
             "Nina", "Alex", "Rita", "Fry", "Umberto", "Lila", "Bender",
             "Lisa", "Marge"
     };
 
-    private static User generateUser() {
+    private User generateUser() {
         Random random = new Random();
         User user = new User();
         user.setName(names[(int) (names.length * Math.random())]); // select random name
@@ -24,9 +29,10 @@ public class FillingDB {
     }
 
     // fill 2 pages at page length - 24
-    public static void fillDB() {  //todo
+    @Transactional
+    public void fillDB() {  //todo
         for (int i = 0; i < 48; i++) {
-            userDaoImpl.saveOrUpdateUser(generateUser());
+            userService.saveOrUpdate(generateUser());
         }
     }
 }

@@ -18,17 +18,21 @@ import com.vaadin.ui.themes.ValoTheme;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Controller;
 
 import java.util.List;
 
 @Theme("mytheme")
 @SuppressWarnings("serial")
-@org.springframework.stereotype.Component
+@Controller
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class UserUI extends UI {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private FillingDB fillDB;
 
     private PagedTable userList = new PagedTable();
 
@@ -62,7 +66,7 @@ public class UserUI extends UI {
 
     @Override
     protected void init(VaadinRequest request) {
-        FillingDB.fillDB(); //TODO
+        fillDB.fillDB(); //TODO
         userContainer = readDataSource();
         initLayout();
         initUserList();
@@ -320,7 +324,7 @@ public class UserUI extends UI {
                 oldUser.setName(name);
                 oldUser.setAge(age);
                 oldUser.setAdmin(isAdmin);
-                userService.save(oldUser);
+                userService.saveOrUpdate(oldUser);
 
                 Notification.show("User saved!", Notification.Type.TRAY_NOTIFICATION);
             }
@@ -352,9 +356,9 @@ public class UserUI extends UI {
                 user.setAge(age);
                 user.setAdmin(isAdmin);
 
-                if (userService.save(user)) {
+                userService.saveOrUpdate(user);
                     Notification.show("New user added!", Notification.Type.TRAY_NOTIFICATION);
-                }
+
                 User last = userService.getLast();
                 int id = last.getId();
                 String date = String.valueOf(last.getCratedDate());

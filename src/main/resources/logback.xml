@@ -24,9 +24,12 @@
         </encoder>
     </appender>
 
+    <!--<logger name="org.hibernate" level="debug"/>-->
+    <!--<logger name="org.springframework" level="debug"/>-->
 
 
-    <logger name="com.shell" level="DEBUG"/>
+
+    <logger name="com.logger.LoggerWrapper" level="DEBUG"/>
 
     <root level="INFO">
         <appender-ref ref="file"/>
