@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 
 @Component
-public class EditLayout extends FormLayout{
+public class EditLayout extends FormLayout {
 
     @Autowired
     private UserService userService;
@@ -28,17 +28,21 @@ public class EditLayout extends FormLayout{
         return editorFields;
     }
 
-    public void initEditor() {
+    private TextField editNameField = new TextField(Columns.NAME);
+    private TextField editAgeField = new TextField(Columns.AGE);
+    private CheckBox editIsAdmin = new CheckBox(Columns.IS_ADMIN);
 
-        TextField editNameField = new TextField(Columns.NAME);
+    public void initEditor() {
+//    TextField editNameField = new TextField(Columns.NAME);
+//    TextField editAgeField = new TextField(Columns.AGE);
+//    CheckBox editIsAdmin = new CheckBox(Columns.IS_ADMIN);
+
         editNameField.setMaxLength(25);
         editNameField.setInputPrompt("Enter name");
 
-        TextField editAgeField = new TextField(Columns.AGE);
         editAgeField.setMaxLength(3);
         editAgeField.setInputPrompt("Enter age");
 
-        CheckBox editIsAdmin = new CheckBox(Columns.IS_ADMIN);
 
         addComponent(removeUserButton);
         addComponent(editNameField);

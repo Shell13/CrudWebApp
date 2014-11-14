@@ -19,9 +19,14 @@ public class UserTable extends PagedTable {
     @Autowired
     private EditLayout editLayout;
 
+    private boolean flag = true;
+
     public void initUserTable() {
-        setContainerDataSource(userContainer);
-        setVisibleColumns(Columns.Columns);
+        if (flag) {
+            setContainerDataSource(userContainer);
+            flag = false;
+        }
+        setVisibleColumns(Columns.COLUMNS);
         setSelectable(true);
         setWidth("100%");
         setImmediate(true);

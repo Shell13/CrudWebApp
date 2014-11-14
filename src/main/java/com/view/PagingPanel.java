@@ -1,7 +1,7 @@
 package com.view;
 
-import com.jensjansson.pagedtable.PagedTable;
 import com.controller.UserContainer;
+import com.jensjansson.pagedtable.PagedTable;
 import com.vaadin.data.Property;
 import com.vaadin.server.Sizeable;
 import com.vaadin.ui.*;

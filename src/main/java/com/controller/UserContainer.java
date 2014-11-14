@@ -18,7 +18,7 @@ public class UserContainer extends IndexedContainer{
     @SuppressWarnings("unchecked")
     public IndexedContainer initContainer() {
 
-        for (String p : Columns.Columns) {
+        for (String p : Columns.COLUMNS) {
             addContainerProperty(p, String.class, "");
         }
 
