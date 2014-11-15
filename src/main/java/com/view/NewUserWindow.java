@@ -1,6 +1,7 @@
 package com.view;
 
 import com.controller.Columns;
+import com.logger.LoggerWrapper;
 import com.model.User;
 import com.service.UserService;
 import com.vaadin.data.Item;
@@ -11,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @org.springframework.stereotype.Component
 public class NewUserWindow extends Window{
+
+    private static final LoggerWrapper LOG = LoggerWrapper.get(NewUserWindow.class);
 
     @Autowired
     private UserService userService;
@@ -77,6 +80,9 @@ public class NewUserWindow extends Window{
 
     @SuppressWarnings("unchecked")
     public void initNewUserWindow(){
+
+        LOG.info("initNewUserWindow");
+
         saveNewUserButton.addClickListener(new Button.ClickListener() {
             public void buttonClick(Button.ClickEvent event) {
 

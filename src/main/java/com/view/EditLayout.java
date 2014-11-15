@@ -1,6 +1,7 @@
 package com.view;
 
 import com.controller.Columns;
+import com.logger.LoggerWrapper;
 import com.model.User;
 import com.service.UserService;
 import com.vaadin.data.Item;
@@ -12,6 +13,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class EditLayout extends FormLayout {
+
+    private static final LoggerWrapper LOG = LoggerWrapper.get(EditLayout.class);
 
     @Autowired
     private UserService userService;
@@ -33,9 +36,8 @@ public class EditLayout extends FormLayout {
     private CheckBox editIsAdmin = new CheckBox(Columns.IS_ADMIN);
 
     public void initEditor() {
-//    TextField editNameField = new TextField(Columns.NAME);
-//    TextField editAgeField = new TextField(Columns.AGE);
-//    CheckBox editIsAdmin = new CheckBox(Columns.IS_ADMIN);
+
+        LOG.info("initEditor");
 
         editNameField.setMaxLength(25);
         editNameField.setInputPrompt("Enter name");
@@ -60,9 +62,12 @@ public class EditLayout extends FormLayout {
 		 * changes automatically without calling commit().
 		 */
         editorFields.setBuffered(false);
+        initRemoveSaveButtons();
     }
 
     public void initRemoveSaveButtons() {
+
+        LOG.info("initRemoveSaveButtons");
 
         saveOldUserButton.addClickListener(new Button.ClickListener() {
             @Override
@@ -102,15 +107,19 @@ public class EditLayout extends FormLayout {
 
         removeUserButton.addClickListener(new Button.ClickListener() {
             public void buttonClick(Button.ClickEvent event) {
-                Object userId = userTable.getValue();
-
+                Object userId = userTable.getValue(); //1
+                LOG.info("1");
                 /* From Table userTable get item ( includes data from the line)
                  * Using split() gets an array of strings , where the first element
                  * ID of the user you want to delete from the database
                  */
-                Item item = userTable.getItem(userId);
-
-                String str[] = item.toString().split(" ");
+                Item item = userTable.getItem(userId); //2
+                LOG.info("2");
+                if (item == null) return;
+                String tmp = item.toString(); //3
+                LOG.info("3");
+                String str[] = tmp.split(" "); // 4
+                LOG.info("4");
                 int id = Integer.parseInt(str[0]);
 
                 try {

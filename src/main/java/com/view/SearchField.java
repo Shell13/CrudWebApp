@@ -2,6 +2,7 @@ package com.view;
 
 import com.controller.Columns;
 import com.controller.UserContainer;
+import com.logger.LoggerWrapper;
 import com.vaadin.data.Container;
 import com.vaadin.data.Item;
 import com.vaadin.event.FieldEvents;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class SearchField extends TextField{
 
+    private static final LoggerWrapper LOG = LoggerWrapper.get(SearchField.class);
+
     @Autowired
     private UserContainer userContainer;
 
@@ -20,6 +23,8 @@ public class SearchField extends TextField{
     private UserTable userTable;
 
     public void initSearch() {
+
+        LOG.info("initSearch");
 
         setInputPrompt("Search users");
 

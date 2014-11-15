@@ -2,6 +2,7 @@ package com.view;
 
 import com.controller.UserContainer;
 import com.jensjansson.pagedtable.PagedTable;
+import com.logger.LoggerWrapper;
 import com.vaadin.data.Property;
 import com.vaadin.server.Sizeable;
 import com.vaadin.ui.*;
@@ -12,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 @org.springframework.stereotype.Component
 public class PagingPanel extends HorizontalLayout{
 
+    private static final LoggerWrapper LOG = LoggerWrapper.get(PagingPanel.class);
+
     @Autowired
     private UserTable userTable;
 
@@ -19,10 +22,11 @@ public class PagingPanel extends HorizontalLayout{
     private UserContainer userContainer;
 
     public void initPaging() {
+
+        LOG.info("initPaging");
         /*
          * Something taken from com.jensjansson.pagedtable.PagedTable from https://vaadin.com/directory#addon/pagedtable
          */
-
         final TextField pageCount = new TextField();
         pageCount.setWidth(100.0f, Sizeable.Unit.PIXELS);
         pageCount.addStyleName(ValoTheme.TEXTFIELD_ALIGN_CENTER);

@@ -3,6 +3,7 @@ package com.view;
 import com.controller.Columns;
 import com.jensjansson.pagedtable.PagedTable;
 import com.controller.UserContainer;
+import com.logger.LoggerWrapper;
 import com.vaadin.data.Property;
 import com.vaadin.ui.Table;
 import com.vaadin.ui.themes.ValoTheme;
@@ -13,19 +14,19 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserTable extends PagedTable {
 
+    private static final LoggerWrapper LOG = LoggerWrapper.get(UserTable.class);
+
     @Autowired
     private UserContainer userContainer;
 
     @Autowired
     private EditLayout editLayout;
 
-    private boolean flag = true;
-
     public void initUserTable() {
-        if (flag) {
-            setContainerDataSource(userContainer);
-            flag = false;
-        }
+        LOG.info("initUserTable");
+
+        setContainerDataSource(userContainer);
+
         setVisibleColumns(Columns.COLUMNS);
         setSelectable(true);
         setWidth("100%");

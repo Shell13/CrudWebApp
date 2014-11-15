@@ -1,14 +1,19 @@
 package com.view;
 
+import com.controller.UserContainer;
+import com.logger.LoggerWrapper;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
 import org.springframework.beans.factory.annotation.Autowired;
 
 
 @org.springframework.stereotype.Component
-//@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class UserTableLayout extends HorizontalSplitPanel{
 
+    private static final LoggerWrapper LOG = LoggerWrapper.get(UserTableLayout.class);
+
+    @Autowired
+    private UserContainer userContainer;
 
     @Autowired
     private UserTable userTable;
@@ -34,6 +39,9 @@ public class UserTableLayout extends HorizontalSplitPanel{
     public void initLayout() {
         if (flag) {
 
+            LOG.info("initLayout");
+
+            userContainer.initContainer();
             userTable.initUserTable();
             newUserWindow.initNewUserWindow();
             searchField.initSearch();
