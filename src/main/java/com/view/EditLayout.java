@@ -107,19 +107,15 @@ public class EditLayout extends FormLayout {
 
         removeUserButton.addClickListener(new Button.ClickListener() {
             public void buttonClick(Button.ClickEvent event) {
-                Object userId = userTable.getValue(); //1
-                LOG.info("1");
+                Object userId = userTable.getValue();
                 /* From Table userTable get item ( includes data from the line)
                  * Using split() gets an array of strings , where the first element
                  * ID of the user you want to delete from the database
                  */
-                Item item = userTable.getItem(userId); //2
-                LOG.info("2");
+                Item item = userTable.getItem(userId);
                 if (item == null) return;
-                String tmp = item.toString(); //3
-                LOG.info("3");
-                String str[] = tmp.split(" "); // 4
-                LOG.info("4");
+                String tmp = item.toString();
+                String str[] = tmp.split(" ");
                 int id = Integer.parseInt(str[0]);
 
                 try {
